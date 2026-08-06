@@ -144,18 +144,8 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   },
 
   fetchUsers: async () => {
-    const { data, error } = await supabase.from('profiles').select('id, email')
-    if (!error && data) {
-      set({ users: data })
-    } else {
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers()
-      if (authError) {
-        toast.error(authError.message)
-        return
-      }
-      if (authData?.users) {
-        set({ users: authData.users.map((u) => ({ id: u.id, email: u.email ?? '' })) })
-      }
-    }
+    const { data, error } = await supabase.from('profiles').select('id, email').order('email')
+    if (error) return
+    set({ users: data })
   },
 }))
