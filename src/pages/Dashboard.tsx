@@ -12,25 +12,23 @@ import { motion } from 'framer-motion'
 export function Dashboard() {
   const { tasks, fetchTasks } = useAgendaStore()
   const navigate = useNavigate()
-
+  
   useEffect(() => {
-    fetchTasks(format(new Date(), 'yyyy-MM-dd'))
+    fetchTasks()
   }, [fetchTasks])
-
-  const todayKey = format(new Date(), 'yyyy-MM-dd')
-  const todayTasks = tasks.filter((t) => t.date === todayKey)
+  
   const todayFormatted = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })
-
+  
   const container = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.1 } },
   }
-
+  
   const item = {
     hidden: { opacity: 0, x: -20 },
     show: { opacity: 1, x: 0 },
   }
-
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -42,7 +40,7 @@ export function Dashboard() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground capitalize">{todayFormatted}</p>
       </div>
-
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -56,7 +54,7 @@ export function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {todayTasks.length === 0 ? (
+            {tasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhuma tarefa para hoje.</p>
             ) : (
               <motion.div
@@ -65,7 +63,7 @@ export function Dashboard() {
                 animate="show"
                 className="space-y-2"
               >
-                {todayTasks.map((task) => (
+                {tasks.map((task) => (
                   <motion.div key={task.id} variants={item}>
                     <TaskCard task={task} />
                   </motion.div>
@@ -75,7 +73,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </motion.div>
-
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
