@@ -7,8 +7,8 @@ const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/contracts', label: 'Contratos', icon: FileText },
   { to: '/agenda', label: 'Agenda', icon: Calendar },
-  { to: '/users', label: 'Usuarios', icon: Users },
-  { to: '/settings', label: 'Configuracoes', icon: Settings },
+  { to: '/users', label: 'Usuários', icon: Users },
+  { to: '/settings', label: 'Configurações', icon: Settings },
 ]
 
 interface Props {
@@ -27,7 +27,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
     >
       <div className="flex items-center gap-2 p-4 border-b h-14 shrink-0">
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-brand-green to-brand-blue flex items-center justify-center shrink-0">
-          <span className="text-white font-bold text-sm">T</span>
+          <span className="text-white font-bold text-sm">A</span>
         </div>
         <AnimatePresence mode="wait">
           {!collapsed && (
@@ -37,7 +37,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
               exit={{ opacity: 0, width: 0 }}
               className="font-semibold text-sm whitespace-nowrap overflow-hidden"
             >
-              Travessia ERP
+              Agenda
             </motion.span>
           )}
         </AnimatePresence>

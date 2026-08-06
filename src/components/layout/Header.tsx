@@ -28,7 +28,7 @@ export function Header({ onToggleSidebar }: Props) {
           </motion.div>
           <Building2 className="h-6 w-6 text-brand-green hidden sm:block" />
           <span className="text-lg font-bold bg-gradient-to-r from-brand-green to-brand-blue bg-clip-text text-transparent">
-            Instituto Travessia
+            Agenda
           </span>
         </div>
         <div className="flex items-center gap-1">

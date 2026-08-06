@@ -28,7 +28,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [fetchUsers])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

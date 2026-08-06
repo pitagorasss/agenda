@@ -1,5 +1,4 @@
 import type { Task } from '@/types'
-import { User } from 'lucide-react'
 
 interface Props {
   task: Task

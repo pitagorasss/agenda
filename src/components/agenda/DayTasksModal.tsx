@@ -24,7 +24,7 @@ export function DayTasksModal({ date, onClose }: Props) {
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [fetchUsers])
 
   const getUserName = (id: string) => users.find((u) => u.id === id)?.email ?? 'Usuário'
 

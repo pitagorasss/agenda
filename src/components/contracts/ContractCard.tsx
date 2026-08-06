@@ -8,16 +8,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { format, addMonths, addYears, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Pencil, Trash2, Plus, X, Package, Calendar, AlertTriangle, FileText, Upload, Download } from 'lucide-react'
+import { Pencil, Trash2, Plus, AlertTriangle, Calendar } from 'lucide-react'
 import type { Contract, ContractProduct } from '@/types'
 import { motion } from 'framer-motion'
+import { ContractCategorySection } from './ContractCategorySection'
+import { ContractRenewDialog } from './ContractRenewDialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 interface Props {
   contract: Contract
 }
 
 export function ContractCard({ contract }: Props) {
-  const { updateContract, deleteContract, createCategory, deleteCategory, createProduct, updateProduct, deleteProduct, uploadInvoice, sendInvoiceEmail, fetchContracts } = useContractStore()
+  const { updateContract, deleteContract, createCategory, deleteCategory, createProduct, updateProduct, deleteProduct, uploadInvoice, getSignedUrl, sendInvoiceEmail } = useContractStore()
   const user = useAuthStore((s) => s.user)
   const [showRenew, setShowRenew] = useState(false)
   const [name, setName] = useState(contract.name)
@@ -25,6 +28,9 @@ export function ContractCard({ contract }: Props) {
   const [renewalPeriod, setRenewalPeriod] = useState(contract.renewal_period)
   const [customDays, setCustomDays] = useState(contract.custom_period_days?.toString() ?? '30')
   const [showEdit, setShowEdit] = useState(false)
+  const [confirmDeleteContract, setConfirmDeleteContract] = useState(false)
+  const [deleteProductId, setDeleteProductId] = useState<string | null>(null)
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null)
 
   const [catName, setCatName] = useState('')
   const [prodName, setProdName] = useState('')
@@ -32,7 +38,7 @@ export function ContractCard({ contract }: Props) {
   const [prodSold, setProdSold] = useState('')
   const [addingCat, setAddingCat] = useState(false)
   const [addingProdFor, setAddingProdFor] = useState<string | null>(null)
-  const [editingProduct, setEditingProduct] = useState<string | null>(null)
+  const [editingProduct, setEditingProduct] = useState<ContractProduct | null>(null)
   const [editProdQty, setEditProdQty] = useState('')
   const [editProdSold, setEditProdSold] = useState('')
   const [uploading, setUploading] = useState<string | null>(null)
@@ -55,19 +61,16 @@ export function ContractCard({ contract }: Props) {
       status: 'active',
     })
     setShowRenew(false)
-    await fetchContracts()
   }
 
-  const handleDelete = async () => {
-    if (confirm('Excluir este contrato?')) {
-      await deleteContract(contract.id)
-    }
+  const handleDeleteContract = async () => {
+    setConfirmDeleteContract(false)
+    await deleteContract(contract.id)
   }
 
   const handleEditSave = async () => {
     await updateContract(contract.id, { name, invoice_email: invoiceEmail || null })
     setShowEdit(false)
-    await fetchContracts()
   }
 
   const handleAddCategory = async () => {
@@ -75,12 +78,6 @@ export function ContractCard({ contract }: Props) {
     await createCategory({ contract_id: contract.id, name: catName.trim() })
     setCatName('')
     setAddingCat(false)
-    await fetchContracts()
-  }
-
-  const handleDeleteCategory = async (id: string) => {
-    await deleteCategory(id)
-    await fetchContracts()
   }
 
   const handleAddProduct = async (categoryId: string) => {
@@ -90,16 +87,10 @@ export function ContractCard({ contract }: Props) {
     setProdQty('')
     setProdSold('')
     setAddingProdFor(null)
-    await fetchContracts()
   }
 
-  const handleDeleteProduct = async (id: string) => {
-    await deleteProduct(id)
-    await fetchContracts()
-  }
-
-  const handleEditProduct = (product: { id: string; quantity: number; quantity_sold: number }) => {
-    setEditingProduct(product.id)
+  const handleEditProduct = (product: ContractProduct) => {
+    setEditingProduct(product)
     setEditProdQty(product.quantity.toString())
     setEditProdSold(product.quantity_sold.toString())
   }
@@ -124,29 +115,34 @@ export function ContractCard({ contract }: Props) {
     setEditProdQty(newQty.toString())
   }, [editProdQty, editProdSold])
 
-  const handleSaveProductEdit = async (id: string) => {
-    await updateProduct(id, { quantity: Number(editProdQty) || 0, quantity_sold: Number(editProdSold) || 0 })
+  const handleSaveProductEdit = async () => {
+    if (!editingProduct) return
+    await updateProduct(editingProduct.id, { quantity: Number(editProdQty) || 0, quantity_sold: Number(editProdSold) || 0 })
     setEditingProduct(null)
-    await fetchContracts()
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, productId: string) => {
     const file = e.target.files?.[0]
     if (!file || !user) return
     setUploading(productId)
-    const url = await uploadInvoice(file, user.id)
-    if (url) {
-      await updateProduct(productId, { invoice_url: url })
-      await fetchContracts()
-      // Enviar e-mail se configurado
-      const product = contract.categories?.flatMap(c => c.products || []).find(p => p.id === productId)
+    const path = await uploadInvoice(file, user.id)
+    if (path) {
+      await updateProduct(productId, { invoice_url: path })
+      const product = contract.categories?.flatMap((c) => c.products || []).find((p) => p.id === productId)
       if (product) {
-        await sendInvoiceEmail(contract.id, product.name, url)
+        await sendInvoiceEmail(contract.id, product.name, path, file.name)
       }
     }
     setUploading(null)
     setUploadTarget(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleOpenInvoice = async (productId: string) => {
+    const product = contract.categories?.flatMap((c) => c.products || []).find((p) => p.id === productId)
+    if (!product?.invoice_url) return
+    const url = await getSignedUrl(product.invoice_url)
+    if (url) window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -189,10 +185,10 @@ export function ContractCard({ contract }: Props) {
               </div>
             </div>
             <div className="flex gap-1 ml-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowEdit(!showEdit)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Editar contrato" onClick={() => setShowEdit(!showEdit)}>
                 <Pencil className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={handleDelete}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" aria-label="Excluir contrato" onClick={() => setConfirmDeleteContract(true)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -203,84 +199,26 @@ export function ContractCard({ contract }: Props) {
           {contract.categories && contract.categories.length > 0 && (
             <div className="space-y-2 mb-3">
               {contract.categories.map((cat) => (
-                <div key={cat.id} className="rounded-lg bg-muted/50 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm flex items-center gap-1">
-                      <Package className="h-3 w-3 text-brand-blue" /> {cat.name}
-                    </span>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAddingProdFor(addingProdFor === cat.id ? null : cat.id)}>
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={() => handleDeleteCategory(cat.id)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {cat.products && cat.products.length > 0 && (
-                    <div className="space-y-1.5">
-                      {cat.products.map((prod: ContractProduct) => (
-                        <div key={prod.id} className="flex items-center justify-between text-sm pl-3 border-l-2 border-brand-green/30 py-1">
-                          <div className="flex-1 min-w-0">
-                            <span className="font-medium">{prod.name}</span>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                              <span>Pendente: {prod.quantity} un</span>
-                              <span>Entregue: {prod.quantity_sold} un</span>
-                              <span className="text-brand-green font-medium">
-                                {(prod.quantity_sold > 0 && (prod.quantity + prod.quantity_sold) > 0) ? 'Rendimento: ' + ((prod.quantity_sold / (prod.quantity + prod.quantity_sold)) * 100).toFixed(1) + '%' : ''}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex gap-1 shrink-0">
-                            {prod.invoice_url ? (
-                              <a href={prod.invoice_url} target="_blank" rel="noopener noreferrer">
-                                <Button variant="outline" size="sm" className="h-7 text-xs border-brand-blue text-brand-blue">
-                                  <FileText className="h-3.5 w-3.5" /> Nota
-                                </Button>
-                              </a>
-                            ) : (
-                              <Button variant="outline" size="sm" className="h-7 text-xs border-dashed" onClick={() => { setUploadTarget(prod.id); fileInputRef.current?.click() }}>
-                                {uploading === prod.id ? '...' : <><Upload className="h-3.5 w-3.5" /> Anexar</>}
-                              </Button>
-                            )}
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditProduct(prod)}>
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={() => handleDeleteProduct(prod.id)}>
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {addingProdFor === cat.id && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-2 flex flex-wrap items-end gap-2">
-                      <div className="flex-1 min-w-[120px]">
-                        <Label className="text-[10px]">Produto</Label>
-                        <Input value={prodName} onChange={(e) => setProdName(e.target.value)} placeholder="Nome" className="h-8 text-sm" />
-                      </div>
-                      <div className="w-16">
-                        <Label className="text-[10px]">Pendente</Label>
-                        <Input type="number" value={prodQty} onChange={(e) => setProdQty(e.target.value)} placeholder="0" className="h-8 text-sm" />
-                      </div>
-                      <div className="w-16">
-                        <Label className="text-[10px]">Entregue</Label>
-                        <Input type="number" value={prodSold} onChange={(e) => setProdSold(e.target.value)} placeholder="0" className="h-8 text-sm" />
-                      </div>
-                      <div className="flex gap-1">
-                        <Button size="sm" className="h-8" onClick={() => handleAddProduct(cat.id)} disabled={!prodName.trim()}>
-                          <Plus className="h-3 w-3" /> Add
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-8" onClick={() => setAddingProdFor(null)}>
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
+                <ContractCategorySection
+                  key={cat.id}
+                  category={cat}
+                  addingProduct={addingProdFor === cat.id}
+                  prodName={prodName}
+                  prodQty={prodQty}
+                  prodSold={prodSold}
+                  uploading={uploading}
+                  onToggleAddProduct={() => setAddingProdFor(addingProdFor === cat.id ? null : cat.id)}
+                  onChangeProdName={setProdName}
+                  onChangeProdQty={setProdQty}
+                  onChangeProdSold={setProdSold}
+                  onAddProduct={handleAddProduct}
+                  onCancelAddProduct={() => { setAddingProdFor(null); setProdName('') }}
+                  onDeleteCategory={(id) => setDeleteCategoryId(id)}
+                  onUpload={(productId) => { setUploadTarget(productId); fileInputRef.current?.click() }}
+                  onOpenInvoice={handleOpenInvoice}
+                  onEditProduct={handleEditProduct}
+                  onDeleteProduct={(id) => setDeleteProductId(id)}
+                />
               ))}
             </div>
           )}
@@ -336,48 +274,52 @@ export function ContractCard({ contract }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
-            <Button onClick={() => editingProduct && handleSaveProductEdit(editingProduct)}>Salvar</Button>
+            <Button onClick={handleSaveProductEdit}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showRenew} onOpenChange={setShowRenew}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Renovar Contrato</DialogTitle>
-            <DialogDescription>Confirme a renovacao do contrato.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label>Periodicidade</Label>
-            <select className="w-full rounded-md border px-3 py-2 text-sm bg-background" value={renewalPeriod} onChange={(e) => setRenewalPeriod(e.target.value as any)}>
-              <option value="6months">6 meses</option>
-              <option value="1year">1 ano</option>
-              <option value="custom">Personalizado</option>
-            </select>
-            {renewalPeriod === 'custom' && (
-              <div>
-                <Label>Dias</Label>
-                <Input type="number" value={customDays} onChange={(e) => setCustomDays(e.target.value)} />
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground pt-2">
-              Novo vencimento:{' '}
-              <strong>
-                {format(
-                  renewalPeriod === '6months' ? addMonths(new Date(), 6) :
-                  renewalPeriod === '1year' ? addYears(new Date(), 1) :
-                  new Date(Date.now() + (Number(customDays) || 30) * 86400000),
-                  'dd/MM/yyyy'
-                )}
-              </strong>
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRenew(false)}>Cancelar</Button>
-            <Button onClick={handleRenew}>Confirmar Renovacao</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ContractRenewDialog
+        open={showRenew}
+        renewalPeriod={renewalPeriod}
+        customDays={customDays}
+        onChangePeriod={setRenewalPeriod}
+        onChangeCustomDays={setCustomDays}
+        onConfirm={handleRenew}
+        onCancel={() => setShowRenew(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteContract}
+        title="Excluir este contrato?"
+        description="Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        onConfirm={handleDeleteContract}
+        onCancel={() => setConfirmDeleteContract(false)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteCategoryId}
+        title="Excluir esta categoria?"
+        description="Os produtos vinculados também serão excluídos."
+        confirmLabel="Excluir"
+        onConfirm={async () => {
+          if (deleteCategoryId) await deleteCategory(deleteCategoryId)
+          setDeleteCategoryId(null)
+        }}
+        onCancel={() => setDeleteCategoryId(null)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteProductId}
+        title="Excluir este produto?"
+        confirmLabel="Excluir"
+        onConfirm={async () => {
+          if (deleteProductId) await deleteProduct(deleteProductId)
+          setDeleteProductId(null)
+        }}
+        onCancel={() => setDeleteProductId(null)}
+      />
     </>
   )
 }

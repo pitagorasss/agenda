@@ -8,7 +8,7 @@ export function Contracts() {
 
   useEffect(() => {
     fetchContracts()
-  }, [])
+  }, [fetchContracts])
 
   return (
     <motion.div

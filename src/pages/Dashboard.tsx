@@ -20,7 +20,7 @@ export function Dashboard() {
   useEffect(() => {
     fetchContracts()
     fetchTasks(format(new Date(), 'yyyy-MM-dd'))
-  }, [])
+  }, [fetchContracts, fetchTasks])
 
   const todayKey = format(new Date(), 'yyyy-MM-dd')
   const todayTasks = tasks.filter((t) => t.date === todayKey)
@@ -53,7 +53,7 @@ export function Dashboard() {
               Alertas de Vencimento
             </DialogTitle>
             <DialogDescription className="text-red-600/70 dark:text-red-400/70">
-              {alerts.length} {alerts.length === 1 ? 'contrato esta' : 'contratos estao'} proximos do vencimento
+              {alerts.length} {alerts.length === 1 ? 'contrato está' : 'contratos estão'} próximos do vencimento
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -135,7 +135,7 @@ export function Dashboard() {
                       </p>
                       <p className="text-sm text-red-600/70 dark:text-red-400/70 flex items-center gap-1 mt-1">
                         <Calendar className="h-3 w-3" />
-                        Proximo vencimento: {format(new Date(contract.next_due_date), 'dd/MM/yyyy', { locale: ptBR })}
+                        Próximo vencimento: {format(new Date(contract.next_due_date), 'dd/MM/yyyy', { locale: ptBR })}
                       </p>
                       <p className="text-xs text-red-500/60 mt-1 flex items-center gap-1">
                         Clique para ver detalhes <ArrowRight className="h-3 w-3" />
@@ -170,7 +170,7 @@ export function Dashboard() {
                   animate="show"
                   className="space-y-2"
                 >
-                  {todayTasks.map((task, idx) => (
+                  {todayTasks.map((task) => (
                     <motion.div key={task.id} variants={item}>
                       <TaskCard task={task} />
                     </motion.div>

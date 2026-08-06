@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 import type { Contract, ContractCategory, ContractProduct } from '@/types'
 
 interface ContractState {
@@ -16,20 +17,21 @@ interface ContractState {
   updateProduct: (id: string, data: Partial<ContractProduct>) => Promise<void>
   deleteProduct: (id: string) => Promise<void>
   uploadInvoice: (file: File, userId: string) => Promise<string | null>
-  sendInvoiceEmail: (contractId: string, productName: string, invoiceUrl: string) => Promise<void>
+  getSignedUrl: (path: string) => Promise<string | null>
+  sendInvoiceEmail: (contractId: string, productName: string, invoicePath: string, fileName: string) => Promise<boolean>
 }
 
-export const useContractStore = create<ContractState>((set) => ({
+export const useContractStore = create<ContractState>((set, get) => ({
   contracts: [],
   loading: false,
 
   fetchContracts: async () => {
     set({ loading: true })
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('contracts')
       .select('*, categories:contract_categories(*, products:contract_products(*))')
       .order('created_at', { ascending: false })
-    if (data) set({ contracts: data })
+    if (!error && data) set({ contracts: data })
     set({ loading: false })
   },
 
@@ -39,23 +41,34 @@ export const useContractStore = create<ContractState>((set) => ({
       .insert(data)
       .select('*, categories:contract_categories(*, products:contract_products(*))')
       .single()
-    if (!error && result) {
-      set((s) => ({ contracts: [result, ...s.contracts] }))
-      return result
+    if (error) {
+      toast.error(error.message)
+      return null
     }
-    return null
+    set((s) => ({ contracts: [result, ...s.contracts] }))
+    toast.success('Contrato criado')
+    return result
   },
 
   updateContract: async (id, data) => {
-    await supabase.from('contracts').update(data).eq('id', id)
+    const { error } = await supabase.from('contracts').update(data).eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
     set((s) => ({
       contracts: s.contracts.map((c) => (c.id === id ? { ...c, ...data } : c)),
     }))
   },
 
   deleteContract: async (id) => {
-    await supabase.from('contracts').delete().eq('id', id)
+    const { error } = await supabase.from('contracts').delete().eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
     set((s) => ({ contracts: s.contracts.filter((c) => c.id !== id) }))
+    toast.success('Contrato excluído')
   },
 
   createCategory: async (data) => {
@@ -64,21 +77,26 @@ export const useContractStore = create<ContractState>((set) => ({
       .insert(data)
       .select()
       .single()
-    if (!error && result) {
-      set((s) => ({
-        contracts: s.contracts.map((c) =>
-          c.id === result.contract_id
-            ? { ...c, categories: [...(c.categories || []), result] }
-            : c,
-        ),
-      }))
-      return result
+    if (error) {
+      toast.error(error.message)
+      return null
     }
-    return null
+    set((s) => ({
+      contracts: s.contracts.map((c) =>
+        c.id === result.contract_id
+          ? { ...c, categories: [...(c.categories || []), result] }
+          : c,
+      ),
+    }))
+    return result
   },
 
   updateCategory: async (id, data) => {
-    await supabase.from('contract_categories').update(data).eq('id', id)
+    const { error } = await supabase.from('contract_categories').update(data).eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
     set((s) => ({
       contracts: s.contracts.map((c) => ({
         ...c,
@@ -88,7 +106,11 @@ export const useContractStore = create<ContractState>((set) => ({
   },
 
   deleteCategory: async (id) => {
-    await supabase.from('contract_categories').delete().eq('id', id)
+    const { error } = await supabase.from('contract_categories').delete().eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
     set((s) => ({
       contracts: s.contracts.map((c) => ({
         ...c,
@@ -103,24 +125,29 @@ export const useContractStore = create<ContractState>((set) => ({
       .insert(data)
       .select()
       .single()
-    if (!error && result) {
-      set((s) => ({
-        contracts: s.contracts.map((c) => ({
-          ...c,
-          categories: c.categories?.map((cat) =>
-            cat.id === result.contract_category_id
-              ? { ...cat, products: [...(cat.products || []), result] }
-              : cat,
-          ),
-        })),
-      }))
-      return result
+    if (error) {
+      toast.error(error.message)
+      return null
     }
-    return null
+    set((s) => ({
+      contracts: s.contracts.map((c) => ({
+        ...c,
+        categories: c.categories?.map((cat) =>
+          cat.id === result.contract_category_id
+            ? { ...cat, products: [...(cat.products || []), result] }
+            : cat,
+        ),
+      })),
+    }))
+    return result
   },
 
   updateProduct: async (id, data) => {
-    await supabase.from('contract_products').update(data).eq('id', id)
+    const { error } = await supabase.from('contract_products').update(data).eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
     set((s) => ({
       contracts: s.contracts.map((c) => ({
         ...c,
@@ -133,7 +160,11 @@ export const useContractStore = create<ContractState>((set) => ({
   },
 
   deleteProduct: async (id) => {
-    await supabase.from('contract_products').delete().eq('id', id)
+    const { error } = await supabase.from('contract_products').delete().eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
     set((s) => ({
       contracts: s.contracts.map((c) => ({
         ...c,
@@ -149,20 +180,37 @@ export const useContractStore = create<ContractState>((set) => ({
     const ext = file.name.split('.').pop()
     const path = `invoices/${userId}/${Date.now()}.${ext}`
     const { error } = await supabase.storage.from('contracts').upload(path, file)
-    if (error) return null
-    const { data: urlData } = supabase.storage.from('contracts').getPublicUrl(path)
-    return urlData?.publicUrl ?? null
+    if (error) {
+      toast.error(error.message)
+      return null
+    }
+    return path
   },
 
-  sendInvoiceEmail: async (contractId, productName, invoiceUrl) => {
-    try {
-      const contract = useContractStore.getState().contracts.find(c => c.id === contractId)
-      if (!contract?.invoice_email) return
+  getSignedUrl: async (path) => {
+    const { data, error } = await supabase.storage
+      .from('contracts')
+      .createSignedUrl(path, 60 * 60 * 24 * 7)
+    if (error) {
+      toast.error(error.message)
+      return null
+    }
+    return data?.signedUrl ?? null
+  },
 
-      const { supabase } = await import('@/lib/supabase')
+  sendInvoiceEmail: async (contractId, productName, invoicePath, fileName) => {
+    try {
+      const contract = get().contracts.find((c) => c.id === contractId)
+      if (!contract?.invoice_email) {
+        toast.error('Contrato sem e-mail configurado para notas fiscais')
+        return false
+      }
+
+      const signedUrl = await get().getSignedUrl(invoicePath)
+      if (!signedUrl) return false
+
       const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session?.access_token) return
+      if (!session?.access_token) return false
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invoice-email`, {
         method: 'POST',
@@ -171,19 +219,24 @@ export const useContractStore = create<ContractState>((set) => ({
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          invoiceUrl,
+          invoiceUrl: signedUrl,
           contractName: contract.name,
           productName,
           invoiceEmail: contract.invoice_email,
-          fileName: 'nota-fiscal.pdf',
+          fileName,
         }),
       })
 
       if (!response.ok) {
-        console.error('Erro ao enviar e-mail:', await response.text())
+        const body = await response.json().catch(() => ({}))
+        toast.error(body.error ?? 'Erro ao enviar e-mail')
+        return false
       }
+      toast.success('Nota fiscal enviada por e-mail')
+      return true
     } catch (error) {
-      console.error('Erro ao enviar e-mail da nota fiscal:', error)
+      toast.error(error instanceof Error ? error.message : 'Erro ao enviar e-mail')
+      return false
     }
   },
 }))

@@ -41,8 +41,8 @@ export function Login() {
                 <Building2 className="h-8 w-8 text-white" />
               </div>
             </motion.div>
-            <CardTitle className="text-xl">Instituto Travessia</CardTitle>
-            <CardDescription>Sistema ERP - Faça seu login</CardDescription>
+            <CardTitle className="text-xl">Agenda</CardTitle>
+            <CardDescription>Faça seu login</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

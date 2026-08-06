@@ -15,7 +15,7 @@ export function useAuth() {
       setUser(session?.user ?? null)
     })
     return () => subscription.unsubscribe()
-  }, [])
+  }, [initDark, setLoading, setUser])
 
   return { user, loading }
 }

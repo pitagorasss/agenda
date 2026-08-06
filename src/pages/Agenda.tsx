@@ -10,7 +10,7 @@ export function Agenda() {
 
   useEffect(() => {
     fetchCategories()
-  }, [])
+  }, [fetchCategories])
 
   return (
     <motion.div

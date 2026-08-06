@@ -1,10 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { Resend } from "npm:resend@2.0.0"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+}
+
+function htmlEscape(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;")
 }
 
 serve(async (req) => {
@@ -33,18 +41,18 @@ serve(async (req) => {
     const resend = new Resend(resendApiKey)
 
     const { data, error } = await resend.emails.send({
-      from: "Travessia ERP <onboarding@resend.dev>",
+      from: "Agenda <onboarding@resend.dev>",
       to: [invoiceEmail],
       subject: `Nota Fiscal - ${contractName} - ${productName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #16A34A;">Nova Nota Fiscal Disponível</h2>
-          <p>Uma nova nota fiscal foi anexada ao contrato <strong>${contractName}</strong>.</p>
+          <p>Uma nova nota fiscal foi anexada ao contrato <strong>${htmlEscape(contractName)}</strong>.</p>
           
           <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 16px 0;">
-            <p><strong>Contrato:</strong> ${contractName}</p>
-            <p><strong>Produto:</strong> ${productName}</p>
-            <p><strong>Arquivo:</strong> ${fileName}</p>
+            <p><strong>Contrato:</strong> ${htmlEscape(contractName)}</p>
+            <p><strong>Produto:</strong> ${htmlEscape(productName)}</p>
+            <p><strong>Arquivo:</strong> ${htmlEscape(fileName)}</p>
           </div>
           
           <p>
@@ -57,7 +65,7 @@ serve(async (req) => {
           
           <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;" />
           <p style="color: #666; font-size: 12px;">
-            Enviado automaticamente pelo Travessia ERP
+            Enviado automaticamente pela Agenda
           </p>
         </div>
       `,
