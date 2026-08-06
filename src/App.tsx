@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Login } from '@/pages/Login'
 import { Dashboard } from '@/pages/Dashboard'
-import { Contracts } from '@/pages/Contracts'
 import { Agenda } from '@/pages/Agenda'
 import { Users } from '@/pages/Users'
 import { Settings } from '@/pages/Settings'
@@ -29,7 +28,6 @@ function AnimatedOutlet() {
       >
         <Routes location={location}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/contracts" element={<Contracts />} />
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/users" element={<Users />} />
           <Route path="/settings" element={<Settings />} />

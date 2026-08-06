@@ -3,8 +3,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Building2 } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 
 export function Login() {
@@ -30,20 +29,6 @@ export function Login() {
         className="w-full max-w-sm"
       >
         <Card>
-          <CardHeader className="text-center">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring', bounce: 0.5 }}
-              className="flex justify-center mb-2"
-            >
-              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-brand-green to-brand-blue flex items-center justify-center">
-                <Building2 className="h-8 w-8 text-white" />
-              </div>
-            </motion.div>
-            <CardTitle className="text-xl">Agenda</CardTitle>
-            <CardDescription>Faça seu login</CardDescription>
-          </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
