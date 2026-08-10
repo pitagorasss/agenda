@@ -94,7 +94,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
 
   fetchTasks: async (date) => {
     set({ loading: true })
-    let query = supabase.from('tasks').select('*, category:task_categories(*), assigned_user:profiles(id, email)').order('time')
+    let query = supabase.from('tasks').select('*, category:task_categories(*)').order('time')
     if (date) query = query.eq('date', date)
     const { data, error } = await query
     if (!error && data) set({ tasks: data })
@@ -108,7 +108,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
     const { data, error } = await supabase
       .from('tasks')
-      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
+      .select('*, category:task_categories(*)')
       .gte('date', start)
       .lte('date', end)
       .order('date')
@@ -122,7 +122,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     const today = format(new Date(), 'yyyy-MM-dd')
     const { data, error } = await supabase
       .from('tasks')
-      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
+      .select('*, category:task_categories(*)')
       .eq('assigned_to', userId)
       .gte('date', today)
       .order('date')
@@ -135,7 +135,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     set({ loading: true })
     let query = supabase
       .from('tasks')
-      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
+      .select('*, category:task_categories(*)')
       .order('date')
       .order('time')
     if (userId) query = query.eq('assigned_to', userId)
@@ -151,7 +151,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     const { data: result, error } = await supabase
       .from('tasks')
       .insert(data)
-      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
+      .select('*, category:task_categories(*)')
       .single()
     if (error) {
       toast.error(error.message)
@@ -166,7 +166,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       .from('tasks')
       .update(data)
       .eq('id', id)
-      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
+      .select('*, category:task_categories(*)')
       .single()
     if (error) {
       toast.error(error.message)

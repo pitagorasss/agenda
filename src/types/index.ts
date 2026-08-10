@@ -21,7 +21,6 @@ export interface Task {
   completed_at?: string | null
   completed_by?: string | null
   created_at: string
-  assigned_user?: { id: string; email: string } | null
 }
 
 export interface Profile {
