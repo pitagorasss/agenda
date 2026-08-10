@@ -6,6 +6,7 @@ import { Login } from '@/pages/Login'
 import { Dashboard } from '@/pages/Dashboard'
 import { Agenda } from '@/pages/Agenda'
 import { Users } from '@/pages/Users'
+import { Reports } from '@/pages/Reports'
 import { Settings } from '@/pages/Settings'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -30,6 +31,7 @@ function AnimatedOutlet() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

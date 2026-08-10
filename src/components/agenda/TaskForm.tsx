@@ -4,7 +4,10 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+const DESCRIPTION_MAX = 250
 
 const colorPalette = ['#DC2626', '#2563EB', '#16A34A', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#6B7280', '#EF4444']
 
@@ -73,8 +76,21 @@ export function TaskForm({ date, editingId, onDone }: Props) {
         <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="O que vai ser feito?" required />
       </div>
       <div className="space-y-1">
-        <Label>Descrição da atividade</Label>
-        <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="O que a pessoa vai fazer" />
+        <div className="flex items-center justify-between">
+          <Label>Descrição da atividade</Label>
+          <span className={`text-xs ${description.length >= DESCRIPTION_MAX ? 'text-red-500' : 'text-muted-foreground'}`}>
+            {description.length}/{DESCRIPTION_MAX}
+          </span>
+        </div>
+        <Textarea
+          value={description}
+          onChange={(e) => {
+            if (e.target.value.length <= DESCRIPTION_MAX) setDescription(e.target.value)
+          }}
+          placeholder="O que a pessoa vai fazer"
+          autoGrow
+          maxLength={DESCRIPTION_MAX}
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">

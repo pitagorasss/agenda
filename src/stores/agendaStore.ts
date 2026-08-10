@@ -1,13 +1,14 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import type { TaskCategory, Task } from '@/types'
+import { format } from 'date-fns'
+import type { TaskCategory, Task, Profile } from '@/types'
 
 interface AgendaState {
   categories: TaskCategory[]
   tasks: Task[]
   loading: boolean
-  users: { id: string; email: string }[]
+  users: Profile[]
   fetchCategories: () => Promise<void>
   findOrCreateCategory: (name: string, color: string) => Promise<string | null>
   createCategory: (data: Partial<TaskCategory>) => Promise<TaskCategory | null>
@@ -15,9 +16,12 @@ interface AgendaState {
   deleteCategory: (id: string) => Promise<void>
   fetchTasks: (date?: string) => Promise<void>
   fetchTasksByMonth: (year: number, month: number) => Promise<void>
+  fetchUserTasks: (userId: string) => Promise<void>
+  fetchReportedTasks: (filters: { from?: string; to?: string; userId?: string; status?: string }) => Promise<void>
   createTask: (data: Partial<Task>) => Promise<Task | null>
   updateTask: (id: string, data: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
+  markTaskCompleted: (id: string, observation?: string) => Promise<boolean>
   fetchUsers: () => Promise<void>
 }
 
@@ -90,7 +94,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
 
   fetchTasks: async (date) => {
     set({ loading: true })
-    let query = supabase.from('tasks').select('*, category:task_categories(*)').order('time')
+    let query = supabase.from('tasks').select('*, category:task_categories(*), assigned_user:profiles(id, email)').order('time')
     if (date) query = query.eq('date', date)
     const { data, error } = await query
     if (!error && data) set({ tasks: data })
@@ -104,7 +108,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
     const { data, error } = await supabase
       .from('tasks')
-      .select('*, category:task_categories(*)')
+      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
       .gte('date', start)
       .lte('date', end)
       .order('date')
@@ -113,11 +117,41 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     set({ loading: false })
   },
 
+  fetchUserTasks: async (userId) => {
+    set({ loading: true })
+    const today = format(new Date(), 'yyyy-MM-dd')
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
+      .eq('assigned_to', userId)
+      .gte('date', today)
+      .order('date')
+      .order('time')
+    if (!error && data) set({ tasks: data })
+    set({ loading: false })
+  },
+
+  fetchReportedTasks: async ({ from, to, userId, status }) => {
+    set({ loading: true })
+    let query = supabase
+      .from('tasks')
+      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
+      .order('date')
+      .order('time')
+    if (userId) query = query.eq('assigned_to', userId)
+    if (from) query = query.gte('date', from)
+    if (to) query = query.lte('date', to)
+    if (status) query = query.eq('status', status)
+    const { data, error } = await query
+    if (!error && data) set({ tasks: data })
+    set({ loading: false })
+  },
+
   createTask: async (data) => {
     const { data: result, error } = await supabase
       .from('tasks')
       .insert(data)
-      .select('*, category:task_categories(*)')
+      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
       .single()
     if (error) {
       toast.error(error.message)
@@ -132,7 +166,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       .from('tasks')
       .update(data)
       .eq('id', id)
-      .select('*, category:task_categories(*)')
+      .select('*, category:task_categories(*), assigned_user:profiles(id, email)')
       .single()
     if (error) {
       toast.error(error.message)
@@ -152,9 +186,39 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
   },
 
+  markTaskCompleted: async (id, observation) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        completed_by: user?.id ?? null,
+        observation: observation || null,
+      })
+      .eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return false
+    }
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+              completed_by: user?.id ?? null,
+              observation: observation || null,
+            }
+          : t,
+      ),
+    }))
+    return true
+  },
+
   fetchUsers: async () => {
-    const { data, error } = await supabase.from('profiles').select('id, email').order('email')
-    if (error) return
-    set({ users: data })
+    const { data, error } = await supabase.from('profiles').select('id, email, role, created_at').order('email')
+    if (!error && data) set({ users: data })
   },
 }))

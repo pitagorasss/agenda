@@ -16,12 +16,18 @@ export interface Task {
   category?: TaskCategory | null
   assigned_to: string | null
   created_by: string
+  status?: 'pending' | 'completed' | null
+  observation?: string | null
+  completed_at?: string | null
+  completed_by?: string | null
   created_at: string
+  assigned_user?: { id: string; email: string } | null
 }
 
 export interface Profile {
   id: string
   email: string
   name?: string
-  role?: 'admin' | 'user'
+  role?: 'admin' | 'analista' | 'user'
+  created_at?: string
 }
