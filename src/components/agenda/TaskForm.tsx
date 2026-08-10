@@ -18,7 +18,7 @@ interface Props {
 }
 
 export function TaskForm({ date, editingId, onDone }: Props) {
-  const { categories, tasks, createTask, updateTask, findOrCreateCategory, fetchUsers, users } = useAgendaStore()
+  const { categories, tasks, createTask, updateTask, updateCategory, findOrCreateCategory, fetchUsers, users } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const existing = editingId ? tasks.find((t) => t.id === editingId) : null
 
@@ -26,29 +26,47 @@ export function TaskForm({ date, editingId, onDone }: Props) {
   const [description, setDescription] = useState(existing?.description ?? '')
   const [time, setTime] = useState(existing?.time ?? '')
   const [assignedTo, setAssignedTo] = useState(existing?.assigned_to ?? '')
-  const [categoryInput, setCategoryInput] = useState(existing?.category?.name ?? '')
+  const [categoryMode, setCategoryMode] = useState<'none' | 'existing' | 'new'>(existing?.category_id ? 'existing' : 'none')
+  const [selectedCategoryId, setSelectedCategoryId] = useState(existing?.category_id ?? '')
+  const [newCategoryName, setNewCategoryName] = useState('')
   const [selectedColor, setSelectedColor] = useState(existing?.category?.color ?? '#2563EB')
 
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
 
+  const handleCategoryChange = (value: string) => {
+    if (value === 'none') {
+      setCategoryMode('none')
+      setSelectedCategoryId('')
+    } else if (value === '__new__') {
+      setCategoryMode('new')
+      setSelectedCategoryId('')
+    } else {
+      setCategoryMode('existing')
+      setSelectedCategoryId(value)
+      setSelectedColor(categories.find((c) => c.id === value)?.color ?? '#2563EB')
+    }
+  }
+
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color)
+    if (categoryMode === 'existing' && selectedCategoryId) {
+      updateCategory(selectedCategoryId, { color })
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
 
-    let categoryId = existing?.category_id ?? null
+    let categoryId: string | null = null
 
-    if (categoryInput.trim()) {
-      const found = categories.find(
-        (c) => c.name.toLowerCase() === categoryInput.trim().toLowerCase()
-      )
-      if (found) {
-        categoryId = found.id
-      } else {
-        const newId = await findOrCreateCategory(categoryInput.trim(), selectedColor)
-        if (newId) categoryId = newId
-      }
+    if (categoryMode === 'existing' && selectedCategoryId) {
+      categoryId = selectedCategoryId
+    } else if (categoryMode === 'new' && newCategoryName.trim()) {
+      const newId = await findOrCreateCategory(newCategoryName.trim(), selectedColor)
+      if (newId) categoryId = newId
     }
 
     const taskData = {
@@ -113,34 +131,69 @@ export function TaskForm({ date, editingId, onDone }: Props) {
       </div>
       <div className="space-y-1">
         <Label>Categoria</Label>
-        <Input
-          value={categoryInput}
-          onChange={(e) => setCategoryInput(e.target.value)}
-          placeholder="Digite o nome da categoria (ex: Reunião)"
-          list="category-suggestions"
-        />
-        <datalist id="category-suggestions">
-          {categories.map((c) => (
-            <option key={c.id} value={c.name} />
-          ))}
-        </datalist>
+        <Select
+          value={categoryMode === 'existing' ? selectedCategoryId : categoryMode === 'new' ? '__new__' : 'none'}
+          onValueChange={handleCategoryChange}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Sem categoria" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Sem categoria</SelectItem>
+            <SelectItem value="__new__">
+              <span className="text-brand-green">+ Criar nova categoria</span>
+            </SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      {categoryInput.trim() && (
-        <div className="space-y-1">
-          <Label>Cor da categoria</Label>
+
+      {categoryMode === 'new' && (
+        <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
+          <div className="space-y-1">
+            <Label>Nome da nova categoria</Label>
+            <Input
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="Ex: Reunião"
+              autoFocus
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Cor</Label>
+            <div className="flex flex-wrap gap-2">
+              {colorPalette.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setSelectedColor(color)}
+                  className={`h-7 w-7 rounded-full border-2 transition-transform hover:scale-110 ${selectedColor === color ? 'border-foreground scale-110' : 'border-transparent'}`}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {categoryMode === 'existing' && selectedCategoryId && (
+        <div className="space-y-1 rounded-lg border bg-muted/30 p-3">
+          <Label>Cor da categoria (editar)</Label>
           <div className="flex flex-wrap gap-2">
             {colorPalette.map((color) => (
               <button
                 key={color}
                 type="button"
-                onClick={() => setSelectedColor(color)}
-                className={`h-7 w-7 rounded-full border-2 transition-transform hover:scale-110 ${
-                  selectedColor === color ? 'border-foreground scale-110' : 'border-transparent'
-                }`}
+                onClick={() => handleColorSelect(color)}
+                className={`h-7 w-7 rounded-full border-2 transition-transform hover:scale-110 ${selectedColor === color ? 'border-foreground scale-110' : 'border-transparent'}`}
                 style={{ backgroundColor: color }}
               />
             ))}
           </div>
+          <p className="text-xs text-muted-foreground">A alteração é salva imediatamente na categoria.</p>
         </div>
       )}
       <div className="flex justify-end gap-2 pt-2">
