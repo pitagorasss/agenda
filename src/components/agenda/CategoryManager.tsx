@@ -42,12 +42,10 @@ export function CategoryManager() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium">Categorias</h3>
-        <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) resetForm() }}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="h-3 w-3" /> Nova Categoria</Button>
-          </DialogTrigger>
+      <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) resetForm() }}>
+        <DialogTrigger asChild>
+          <Button size="sm"><Plus className="h-3 w-3" /> Nova Categoria</Button>
+        </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingId ? 'Editar' : 'Nova'} Categoria</DialogTitle>
@@ -78,7 +76,6 @@ export function CategoryManager() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
 
       {categories.length === 0 && (
         <p className="text-sm text-muted-foreground">Nenhuma categoria criada.</p>
