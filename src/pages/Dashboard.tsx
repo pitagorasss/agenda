@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Plus, FileText, Users as UsersIcon } from 'lucide-react'
+import { FileText, Users as UsersIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
@@ -115,11 +115,6 @@ export function Dashboard() {
         transition={{ delay: 0.3, duration: 0.3 }}
         className="flex flex-wrap gap-3"
       >
-        <motion.div whileTap={{ scale: 0.95 }}>
-          <Button variant="secondary" onClick={() => navigate('/agenda')}>
-            <Plus className="h-4 w-4" /> Nova Tarefa
-          </Button>
-        </motion.div>
         {currentRole === 'admin' && (
           <motion.div whileTap={{ scale: 0.95 }}>
             <Button variant="outline" onClick={() => navigate('/users')}>
