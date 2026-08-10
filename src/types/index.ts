@@ -30,3 +30,13 @@ export interface Profile {
   role?: 'admin' | 'analista' | 'user'
   created_at?: string
 }
+
+export interface EvolutionObservation {
+  id: string
+  type: 'melhoria' | 'desempenho' | 'atencao'
+  level: 'urgente' | 'emergente' | 'empurravel'
+  description: string
+  responsible_id: string | null
+  created_by: string
+  created_at: string
+}

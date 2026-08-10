@@ -4,7 +4,7 @@ import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { CheckCircle2, MessageSquarePlus } from 'lucide-react'
+import { CheckCircle2, MessageSquarePlus, RotateCcw } from 'lucide-react'
 
 interface Props {
   task: Task
@@ -13,7 +13,7 @@ interface Props {
 const OBS_MAX = 500
 
 export function TaskCard({ task }: Props) {
-  const { markTaskCompleted, updateTask, users } = useAgendaStore()
+  const { markTaskCompleted, markTaskPending, updateTask, users } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const [editingObs, setEditingObs] = useState(false)
   const [obsText, setObsText] = useState(task.observation ?? '')
@@ -28,6 +28,14 @@ export function TaskCard({ task }: Props) {
 
   const handleComplete = async () => {
     const ok = await markTaskCompleted(task.id, obsText)
+    if (ok) {
+      setEditingObs(false)
+      setObsText('')
+    }
+  }
+
+  const handlePending = async () => {
+    const ok = await markTaskPending(task.id, obsText)
     if (ok) {
       setEditingObs(false)
       setObsText('')
@@ -101,6 +109,11 @@ export function TaskCard({ task }: Props) {
                   Concluir
                 </Button>
               )}
+              {completed && canModify && (
+                <Button size="sm" variant="secondary" onClick={handlePending}>
+                  <RotateCcw className="h-3.5 w-3.5" /> Marcar pendente
+                </Button>
+              )}
             </div>
           </div>
         ) : (
@@ -109,6 +122,11 @@ export function TaskCard({ task }: Props) {
               {canComplete && (
                 <Button size="sm" variant="outline" onClick={handleComplete}>
                   <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
+                </Button>
+              )}
+              {completed && (
+                <Button size="sm" variant="outline" onClick={() => { setEditingObs(true); setObsText('') }}>
+                  <RotateCcw className="h-3.5 w-3.5" /> Marcar pendente
                 </Button>
               )}
               <Button

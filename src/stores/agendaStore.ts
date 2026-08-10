@@ -2,11 +2,18 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
-import type { TaskCategory, Task, Profile } from '@/types'
+import type { TaskCategory, Task, Profile, EvolutionObservation } from '@/types'
+
+interface EvolutionFilters {
+  responsibleId?: string
+  type?: string
+  level?: string
+}
 
 interface AgendaState {
   categories: TaskCategory[]
   tasks: Task[]
+  evolutions: EvolutionObservation[]
   loading: boolean
   users: Profile[]
   fetchCategories: () => Promise<void>
@@ -22,12 +29,18 @@ interface AgendaState {
   updateTask: (id: string, data: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
   markTaskCompleted: (id: string, observation?: string) => Promise<boolean>
+  markTaskPending: (id: string, observation?: string) => Promise<boolean>
+  fetchEvolutions: (filters?: EvolutionFilters) => Promise<void>
+  createEvolution: (data: Partial<EvolutionObservation>) => Promise<EvolutionObservation | null>
+  updateEvolution: (id: string, data: Partial<EvolutionObservation>) => Promise<boolean>
+  deleteEvolution: (id: string) => Promise<boolean>
   fetchUsers: () => Promise<void>
 }
 
 export const useAgendaStore = create<AgendaState>((set) => ({
   categories: [],
   tasks: [],
+  evolutions: [],
   users: [],
   loading: false,
 
@@ -214,6 +227,84 @@ export const useAgendaStore = create<AgendaState>((set) => ({
           : t,
       ),
     }))
+    return true
+  },
+
+  markTaskPending: async (id, observation) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        status: 'pending',
+        completed_at: null,
+        completed_by: null,
+        observation: observation || null,
+      })
+      .eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return false
+    }
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              status: 'pending',
+              completed_at: null,
+              completed_by: null,
+              observation: observation || null,
+            }
+          : t,
+      ),
+    }))
+    return true
+  },
+
+  fetchEvolutions: async ({ responsibleId, type, level } = {}) => {
+    set({ loading: true })
+    let query = supabase.from('evolution_observations').select('*').order('created_at', { ascending: false })
+    if (responsibleId) query = query.eq('responsible_id', responsibleId)
+    if (type) query = query.eq('type', type)
+    if (level) query = query.eq('level', level)
+    const { data, error } = await query
+    if (!error && data) set({ evolutions: data })
+    set({ loading: false })
+  },
+
+  createEvolution: async (data) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: result, error } = await supabase
+      .from('evolution_observations')
+      .insert({ ...data, created_by: user?.id })
+      .select()
+      .single()
+    if (error) {
+      toast.error(error.message)
+      return null
+    }
+    set((s) => ({ evolutions: [result, ...s.evolutions] }))
+    return result
+  },
+
+  updateEvolution: async (id, data) => {
+    const { error } = await supabase.from('evolution_observations').update(data).eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return false
+    }
+    set((s) => ({
+      evolutions: s.evolutions.map((e) => (e.id === id ? { ...e, ...data } : e)),
+    }))
+    return true
+  },
+
+  deleteEvolution: async (id) => {
+    const { error } = await supabase.from('evolution_observations').delete().eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return false
+    }
+    set((s) => ({ evolutions: s.evolutions.filter((e) => e.id !== id) }))
     return true
   },
 

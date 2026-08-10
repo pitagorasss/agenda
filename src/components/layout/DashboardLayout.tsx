@@ -1,12 +1,13 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
-import { LayoutDashboard, Calendar, Users, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Settings, LogOut, TrendingUp } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/lib/utils'
 
 const mobileLinks = [
   { to: '/dashboard', label: 'Início', icon: LayoutDashboard },
   { to: '/agenda', label: 'Agenda', icon: Calendar },
+  { to: '/evolution', label: 'Evolução', icon: TrendingUp },
   { to: '/users', label: 'Usuários', icon: Users },
   { to: '/settings', label: 'Ajustes', icon: Settings },
 ]
