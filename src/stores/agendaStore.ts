@@ -82,7 +82,10 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       toast.error(error.message)
       return
     }
-    set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }))
+    set((s) => ({
+      categories: s.categories.filter((c) => c.id !== id),
+      tasks: s.tasks.map((t) => (t.category_id === id ? { ...t, category_id: null } : t)),
+    }))
   },
 
   fetchTasks: async (date) => {
@@ -97,7 +100,8 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   fetchTasksByMonth: async (year, month) => {
     set({ loading: true })
     const start = `${year}-${String(month).padStart(2, '0')}-01`
-    const end = new Date(year, month, 0).toISOString().split('T')[0]
+    const lastDay = new Date(year, month, 0).getDate()
+    const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
     const { data, error } = await supabase
       .from('tasks')
       .select('*, category:task_categories(*)')
@@ -124,13 +128,18 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   },
 
   updateTask: async (id, data) => {
-    const { error } = await supabase.from('tasks').update(data).eq('id', id)
+    const { data: updated, error } = await supabase
+      .from('tasks')
+      .update(data)
+      .eq('id', id)
+      .select('*, category:task_categories(*)')
+      .single()
     if (error) {
       toast.error(error.message)
       return
     }
     set((s) => ({
-      tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...data } : t)),
+      tasks: s.tasks.map((t) => (t.id === id ? updated : t)),
     }))
   },
 

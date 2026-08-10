@@ -1,11 +1,11 @@
 import { useAuthStore } from '@/stores/authStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Moon, Sun, User, Palette } from 'lucide-react'
+import { Moon, Sun, User, Palette, LogOut } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export function Settings() {
-  const { isDark, toggleDark, user } = useAuthStore()
+  const { isDark, toggleDark, user, signOut } = useAuthStore()
 
   return (
     <motion.div
@@ -61,6 +61,9 @@ export function Settings() {
             <p className="text-sm text-muted-foreground">
               Conectado como <strong>{user?.email}</strong>
             </p>
+            <Button variant="outline" className="mt-4" onClick={() => signOut()}>
+              <LogOut className="h-4 w-4" /> Sair
+            </Button>
           </CardContent>
         </Card>
       </motion.div>

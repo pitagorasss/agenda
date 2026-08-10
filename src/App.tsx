@@ -31,6 +31,7 @@ function AnimatedOutlet() {
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/users" element={<Users />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </motion.div>
     </AnimatePresence>

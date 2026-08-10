@@ -14,7 +14,7 @@ export function Dashboard() {
   const navigate = useNavigate()
   
   useEffect(() => {
-    fetchTasks()
+    fetchTasks(format(new Date(), 'yyyy-MM-dd'))
   }, [fetchTasks])
   
   const todayFormatted = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })

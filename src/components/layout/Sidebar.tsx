@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Calendar, Users, Settings } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Settings, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuthStore } from '@/stores/authStore'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -14,6 +15,7 @@ const links = [
 export function Sidebar() {
   const location = useLocation()
   const [expanded, setExpanded] = useState(false)
+  const signOut = useAuthStore((s) => s.signOut)
 
   return (
     <motion.aside
@@ -63,6 +65,31 @@ export function Sidebar() {
           )
         })}
       </nav>
+      <div className="border-t p-3">
+        <button
+          type="button"
+          onClick={() => signOut()}
+          title={!expanded ? 'Sair' : undefined}
+          className={cn(
+            'relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
+            !expanded && 'justify-center px-0',
+          )}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          <AnimatePresence mode="wait">
+            {expanded && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="whitespace-nowrap"
+              >
+                Sair
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
+      </div>
     </motion.aside>
   )
 }
