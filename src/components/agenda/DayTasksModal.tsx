@@ -6,7 +6,6 @@ import { TaskForm } from './TaskForm'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Pencil, Trash2, Plus, User } from 'lucide-react'
-import { useAuthStore } from '@/stores/authStore'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface Props {
@@ -16,7 +15,6 @@ interface Props {
 
 export function DayTasksModal({ date, onClose }: Props) {
   const { tasks, deleteTask, users, fetchUsers } = useAgendaStore()
-  const user = useAuthStore((s) => s.user)
   const [showForm, setShowForm] = useState(false)
   const [editingTask, setEditingTask] = useState<string | null>(null)
   const dateKey = format(date, 'yyyy-MM-dd')
@@ -28,15 +26,10 @@ export function DayTasksModal({ date, onClose }: Props) {
 
   const getUserName = (id: string) => users.find((u) => u.id === id)?.email ?? 'Usuário'
 
-  const canModify = (taskId: string) => {
-    const t = tasks.find((tk) => tk.id === taskId)
-    return t?.created_by === user?.id || false
-  }
+  const canModify = () => true
 
   const handleDelete = async (id: string) => {
-    if (confirm('Excluir esta tarefa?')) {
-      await deleteTask(id)
-    }
+    await deleteTask(id)
   }
 
   return (
@@ -92,7 +85,7 @@ export function DayTasksModal({ date, onClose }: Props) {
                   )}
                   {task.description && <p className="text-xs text-muted-foreground mt-0.5">{task.description}</p>}
                 </div>
-                {canModify(task.id) && (
+                {canModify() && (
                   <div className="flex gap-1 shrink-0">
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingTask(task.id); setShowForm(true) }}>
                       <Pencil className="h-3 w-3" />
