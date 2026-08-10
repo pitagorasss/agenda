@@ -7,7 +7,7 @@ import { TaskForm } from './TaskForm'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Pencil, Trash2, Plus, User, CheckCircle2 } from 'lucide-react'
+import { Pencil, Trash2, Plus, User, CheckCircle2, MessageSquarePlus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
 const OBS_MAX = 500
 
 export function DayTasksModal({ date, onClose }: Props) {
-  const { tasks, deleteTask, markTaskCompleted, users, fetchUsers } = useAgendaStore()
+  const { tasks, deleteTask, markTaskCompleted, updateTask, users, fetchUsers } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const [showForm, setShowForm] = useState(false)
   const [editingTask, setEditingTask] = useState<string | null>(null)
@@ -51,21 +51,27 @@ export function DayTasksModal({ date, onClose }: Props) {
   }
 
   const handleComplete = async (id: string) => {
-    const ok = await markTaskCompleted(id, obsTaskId === id ? obsText : undefined)
+    const ok = await markTaskCompleted(id, obsText)
     if (ok) {
       setObsTaskId(null)
       setObsText('')
     }
   }
 
+  const handleSaveObservation = async (id: string) => {
+    await updateTask(id, { observation: obsText.trim() || null })
+    setObsTaskId(null)
+    setObsText('')
+  }
+
   return (
     <Dialog open={true} onOpenChange={(v) => { if (!v) onClose() }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
           <AnimatePresence mode="popLayout">
             {dayTasks.length === 0 && !showForm && (
               <motion.p
@@ -129,6 +135,17 @@ export function DayTasksModal({ date, onClose }: Props) {
                         <span className="font-medium text-foreground">Obs:</span> {task.observation}
                       </p>
                     )}
+                    {canModify(task.id) && !editingThis && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => { setObsTaskId(task.id); setObsText(task.observation ?? '') }}
+                      >
+                        <MessageSquarePlus className="h-3.5 w-3.5" />
+                        {task.observation ? 'Editar observação' : 'Adicionar observação'}
+                      </Button>
+                    )}
                     {editingThis && (
                       <div className="space-y-1.5 mt-2">
                         <Textarea
@@ -143,9 +160,14 @@ export function DayTasksModal({ date, onClose }: Props) {
                           <Button size="sm" variant="outline" onClick={() => { setObsTaskId(null); setObsText('') }}>
                             Cancelar
                           </Button>
-                          <Button size="sm" onClick={() => handleComplete(task.id)}>
-                            {task.observation ? 'Atualizar e concluir' : 'Salvar e concluir'}
+                          <Button size="sm" variant="outline" onClick={() => handleSaveObservation(task.id)}>
+                            Salvar
                           </Button>
+                          {!completed && (
+                            <Button size="sm" onClick={() => handleComplete(task.id)}>
+                              Concluir
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )}
