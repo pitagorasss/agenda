@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { FileText, Users as UsersIcon } from 'lucide-react'
+import { FileText, Users as UsersIcon, AlertTriangle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 export function Dashboard() {
-  const { tasks, fetchUserTasks, fetchUsers, users, loading } = useAgendaStore()
+  const { tasks, overdueTasks, fetchUserTasks, fetchUsers, users, loading } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -76,6 +76,41 @@ export function Dashboard() {
           ))}
         </div>
       ) : null}
+
+      {overdueTasks.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.3 }}
+        >
+          <Card className="border-amber-500/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                Pendentes de dias anteriores
+                <span className="text-xs font-normal text-muted-foreground ml-1">
+                  ({overdueTasks.length})
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Carregando...</p>
+              ) : (
+                <motion.div variants={container} initial="hidden" animate="show" className="space-y-2">
+                  <AnimatePresence mode="popLayout">
+                    {overdueTasks.map((task) => (
+                      <motion.div key={task.id} variants={item} layout exit={{ opacity: 0, x: -20 }}>
+                        <TaskCard task={task} showDate />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

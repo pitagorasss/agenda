@@ -13,6 +13,7 @@ interface EvolutionFilters {
 interface AgendaState {
   categories: TaskCategory[]
   tasks: Task[]
+  overdueTasks: Task[]
   evolutions: EvolutionObservation[]
   loading: boolean
   users: Profile[]
@@ -40,6 +41,7 @@ interface AgendaState {
 export const useAgendaStore = create<AgendaState>((set) => ({
   categories: [],
   tasks: [],
+  overdueTasks: [],
   evolutions: [],
   users: [],
   loading: false,
@@ -133,14 +135,25 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   fetchUserTasks: async (userId) => {
     set({ loading: true })
     const today = format(new Date(), 'yyyy-MM-dd')
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*, category:task_categories(*)')
-      .eq('assigned_to', userId)
-      .gte('date', today)
-      .order('date')
-      .order('time')
-    if (!error && data) set({ tasks: data })
+    const [tasksResult, overdueResult] = await Promise.all([
+      supabase
+        .from('tasks')
+        .select('*, category:task_categories(*)')
+        .eq('assigned_to', userId)
+        .gte('date', today)
+        .order('date')
+        .order('time'),
+      supabase
+        .from('tasks')
+        .select('*, category:task_categories(*)')
+        .eq('assigned_to', userId)
+        .lt('date', today)
+        .eq('status', 'pending')
+        .order('date')
+        .order('time'),
+    ])
+    if (!tasksResult.error && tasksResult.data) set({ tasks: tasksResult.data })
+    if (!overdueResult.error && overdueResult.data) set({ overdueTasks: overdueResult.data })
     set({ loading: false })
   },
 
@@ -187,6 +200,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     }
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === id ? updated : t)),
+      overdueTasks: s.overdueTasks.map((t) => (t.id === id ? updated : t)),
     }))
   },
 
@@ -196,7 +210,10 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       toast.error(error.message)
       return
     }
-    set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
+    set((s) => ({
+      tasks: s.tasks.filter((t) => t.id !== id),
+      overdueTasks: s.overdueTasks.filter((t) => t.id !== id),
+    }))
   },
 
   markTaskCompleted: async (id, observation) => {
@@ -226,12 +243,13 @@ export const useAgendaStore = create<AgendaState>((set) => ({
             }
           : t,
       ),
+      overdueTasks: s.overdueTasks.filter((t) => t.id !== id),
     }))
     return true
   },
 
   markTaskPending: async (id, observation) => {
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from('tasks')
       .update({
         status: 'pending',
@@ -240,23 +258,33 @@ export const useAgendaStore = create<AgendaState>((set) => ({
         observation: observation || null,
       })
       .eq('id', id)
+      .select('*, category:task_categories(*)')
+      .single()
     if (error) {
       toast.error(error.message)
       return false
     }
-    set((s) => ({
-      tasks: s.tasks.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              status: 'pending',
-              completed_at: null,
-              completed_by: null,
-              observation: observation || null,
-            }
-          : t,
-      ),
-    }))
+    const today = format(new Date(), 'yyyy-MM-dd')
+    set((s) => {
+      const updatedTask = updated ?? {
+        ...s.tasks.find((t) => t.id === id),
+        status: 'pending' as const,
+        completed_at: null,
+        completed_by: null,
+        observation: observation || null,
+      }
+      if (!updatedTask) return s
+      const isPast = updatedTask.date < today
+      return {
+        tasks: s.tasks.map((t) => (t.id === id ? updatedTask : t)),
+        overdueTasks: isPast
+          ? (() => {
+              const exists = s.overdueTasks.some((t) => t.id === id)
+              return exists ? s.overdueTasks.map((t) => (t.id === id ? updatedTask : t)) : [...s.overdueTasks, updatedTask]
+            })()
+          : s.overdueTasks.filter((t) => t.id !== id),
+      }
+    })
     return true
   },
 

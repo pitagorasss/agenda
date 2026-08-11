@@ -5,14 +5,16 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { CheckCircle2, MessageSquarePlus, RotateCcw } from 'lucide-react'
+import { format, parseISO } from 'date-fns'
 
 interface Props {
   task: Task
+  showDate?: boolean
 }
 
 const OBS_MAX = 500
 
-export function TaskCard({ task }: Props) {
+export function TaskCard({ task, showDate }: Props) {
   const { markTaskCompleted, markTaskPending, updateTask, users } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const [editingObs, setEditingObs] = useState(false)
@@ -57,6 +59,11 @@ export function TaskCard({ task }: Props) {
           {completed && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500 text-white font-medium shrink-0">
               Concluída
+            </span>
+          )}
+          {showDate && task.date && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 font-semibold shrink-0">
+              {format(parseISO(task.date), 'dd/MM')}
             </span>
           )}
           {task.time && (
