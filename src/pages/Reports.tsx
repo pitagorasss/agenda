@@ -48,7 +48,7 @@ export function Reports() {
     fetchReportedTasks({ userId: canSeeAll ? undefined : user?.id })
   }
 
-  const getUserName = (id: string) => users.find((u) => u.id === id)?.email ?? '—'
+  const getUserName = (id: string) => users.find((u) => u.id === id)?.name ?? users.find((u) => u.id === id)?.email ?? '—'
 
   const formatDate = (d: string) => {
     const [y, m, day] = d.split('-')
@@ -107,7 +107,7 @@ export function Reports() {
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
                     {users.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>{u.email}</SelectItem>
+                      <SelectItem key={u.id} value={u.id}>{u.name ?? u.email}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

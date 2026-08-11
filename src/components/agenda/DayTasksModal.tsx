@@ -31,7 +31,7 @@ export function DayTasksModal({ date, onClose }: Props) {
     fetchUsers()
   }, [fetchUsers])
 
-  const getUserName = (id: string) => users.find((u) => u.id === id)?.email ?? 'Usuário'
+  const getUserName = (id: string) => users.find((u) => u.id === id)?.name ?? users.find((u) => u.id === id)?.email ?? 'Usuário'
   const currentUserRole = users.find((u) => u.id === user?.id)?.role ?? 'user'
 
   const canModify = (taskId: string) => {

@@ -25,7 +25,7 @@ export function Users() {
   }, [])
 
   const load = async () => {
-    const { data } = await supabase.from('profiles').select('id, email, role, created_at').order('email')
+    const { data } = await supabase.from('profiles').select('id, email, name, role, created_at').order('email')
     if (data) setProfiles(data)
   }
 
@@ -72,7 +72,8 @@ export function Users() {
                   className="flex items-center justify-between py-2.5 gap-3"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{p.email}</p>
+                    <p className="text-sm font-medium truncate">{p.name ?? p.email}</p>
+                    {p.name && <p className="text-xs text-muted-foreground">{p.email}</p>}
                     <p className="text-xs text-muted-foreground">ID: {p.id.slice(0, 8)}...</p>
                   </div>
                   {isAdmin ? (

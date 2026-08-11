@@ -123,7 +123,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
             </SelectTrigger>
             <SelectContent>
               {users.map((u) => (
-                <SelectItem key={u.id} value={u.id}>{u.email}</SelectItem>
+                <SelectItem key={u.id} value={u.id}>{u.name ?? u.email}</SelectItem>
               ))}
             </SelectContent>
           </Select>

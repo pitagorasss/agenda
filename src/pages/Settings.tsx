@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { useAuthStore } from '@/stores/authStore'
+import { useAgendaStore } from '@/stores/agendaStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Moon, Sun, User, Palette, LogOut } from 'lucide-react'
@@ -6,6 +8,13 @@ import { motion } from 'framer-motion'
 
 export function Settings() {
   const { isDark, toggleDark, user, signOut } = useAuthStore()
+  const { users, fetchUsers } = useAgendaStore()
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
+
+  const currentUser = users.find((u) => u.id === user?.id)
 
   return (
     <motion.div
@@ -58,9 +67,12 @@ export function Settings() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Conectado como <strong>{user?.email}</strong>
-            </p>
+            <div className="space-y-0.5">
+              <p className="text-base font-semibold">{currentUser?.name ?? user?.email}</p>
+              {currentUser?.name && (
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+              )}
+            </div>
             <Button variant="outline" className="mt-4" onClick={() => signOut()}>
               <LogOut className="h-4 w-4" /> Sair
             </Button>

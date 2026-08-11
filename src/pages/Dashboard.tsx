@@ -71,7 +71,7 @@ export function Dashboard() {
                   : 'border-input hover:bg-accent',
               )}
             >
-              {u.email}
+              {u.name ?? u.email}
             </button>
           ))}
         </div>
@@ -121,7 +121,7 @@ export function Dashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4 text-brand-blue" />
-              Tarefas de {selectedUser ? selectedUser.email : 'você'}
+              Tarefas de {selectedUser ? (selectedUser.name ?? selectedUser.email) : 'você'}
             </CardTitle>
           </CardHeader>
           <CardContent>

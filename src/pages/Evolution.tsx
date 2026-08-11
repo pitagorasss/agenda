@@ -51,7 +51,7 @@ export function Evolution() {
     fetchEvolutions()
   }, [fetchEvolutions])
 
-  const getUserName = (id: string) => users.find((u) => u.id === id)?.email ?? '—'
+  const getUserName = (id: string) => users.find((u) => u.id === id)?.name ?? users.find((u) => u.id === id)?.email ?? '—'
   const formatDate = (d: string) => {
     const date = new Date(d)
     if (Number.isNaN(date.getTime())) return '—'
@@ -181,7 +181,7 @@ export function Evolution() {
                       </SelectTrigger>
                       <SelectContent>
                         {users.map((u) => (
-                          <SelectItem key={u.id} value={u.id}>{u.email}</SelectItem>
+                          <SelectItem key={u.id} value={u.id}>{u.name ?? u.email}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -232,7 +232,7 @@ export function Evolution() {
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   {users.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{u.email}</SelectItem>
+                    <SelectItem key={u.id} value={u.id}>{u.name ?? u.email}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

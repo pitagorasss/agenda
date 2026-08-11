@@ -337,7 +337,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   },
 
   fetchUsers: async () => {
-    const { data, error } = await supabase.from('profiles').select('id, email, role, created_at').order('email')
+    const { data, error } = await supabase.from('profiles').select('id, email, name, role, created_at').order('email')
     if (!error && data) set({ users: data })
   },
 }))
