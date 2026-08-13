@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -7,8 +7,9 @@ import { TaskForm } from './TaskForm'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Pencil, Trash2, Plus, User, CheckCircle2, MessageSquarePlus, RotateCcw } from 'lucide-react'
+import { Pencil, Trash2, Plus, User, CheckCircle2, MessageSquarePlus, RotateCcw, CalendarClock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ForecastDialog } from '@/components/agenda/ForecastDialog'
 
 interface Props {
   date: Date
@@ -22,6 +23,7 @@ export function DayTasksModal({ date, onClose }: Props) {
   const user = useAuthStore((s) => s.user)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingTask, setEditingTask] = useState<string | null>(null)
+  const [forecastTaskId, setForecastTaskId] = useState<string | null>(null)
   const [obsTaskId, setObsTaskId] = useState<string | null>(null)
   const [obsText, setObsText] = useState('')
   const dateKey = format(date, 'yyyy-MM-dd')
@@ -112,6 +114,11 @@ export function DayTasksModal({ date, onClose }: Props) {
                             Concluída
                           </span>
                         )}
+                        {task.status === 'forecast' && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-blue text-white font-medium shrink-0">
+                            Prevista
+                          </span>
+                        )}
                         {task.time && (
                           <span className="text-xs font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                             {task.time.slice(0, 5)}
@@ -142,6 +149,20 @@ export function DayTasksModal({ date, onClose }: Props) {
                       {task.observation && (
                         <p className="text-xs mt-1 whitespace-pre-wrap border-l-2 border-brand-green pl-2 text-muted-foreground">
                           <span className="font-medium text-foreground">Obs:</span> {task.observation}
+                        </p>
+                      )}
+                      {task.status === 'forecast' && task.forecast_date && (
+                        <p className="text-xs mt-1 whitespace-pre-wrap border-l-2 border-brand-blue pl-2 text-muted-foreground">
+                          <span className="font-medium text-foreground">
+                            Prevista para ser concluída em {format(parseISO(task.forecast_date), 'dd/MM/yyyy')}
+                            {task.forecast_time ? ` às ${task.forecast_time.slice(0, 5)}` : ''}
+                          </span>
+                          {task.forecast_observation && (
+                            <>
+                              {' — '}
+                              {task.forecast_observation}
+                            </>
+                          )}
                         </p>
                       )}
                       {canModify(task.id) && !editingThis && (
@@ -211,6 +232,15 @@ export function DayTasksModal({ date, onClose }: Props) {
                       )}
                       {canModify(task.id) && (
                         <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            title={task.status === 'forecast' ? 'Editar previsão de conclusão' : 'Previsão de conclusão'}
+                            onClick={() => setForecastTaskId(task.id)}
+                          >
+                            <CalendarClock className={`h-3 w-3 ${task.status === 'forecast' ? 'text-brand-blue' : ''}`} />
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingTask(task.id)}>
                             <Pencil className="h-3 w-3" />
                           </Button>
@@ -260,6 +290,14 @@ export function DayTasksModal({ date, onClose }: Props) {
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {forecastTaskId && (
+        <ForecastDialog
+          task={tasks.find((t) => t.id === forecastTaskId)!}
+          open
+          onOpenChange={(v) => { if (!v) setForecastTaskId(null) }}
+        />
       )}
     </>
   )

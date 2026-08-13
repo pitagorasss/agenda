@@ -16,8 +16,11 @@ export interface Task {
   category?: TaskCategory | null
   assigned_to: string | null
   created_by: string
-  status?: 'pending' | 'completed' | null
+  status?: 'pending' | 'forecast' | 'completed' | null
   observation?: string | null
+  forecast_date?: string | null
+  forecast_time?: string | null
+  forecast_observation?: string | null
   completed_at?: string | null
   completed_by?: string | null
   created_at: string

@@ -93,6 +93,7 @@ export function Reports() {
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="forecast">Previsão</SelectItem>
                   <SelectItem value="completed">Concluída</SelectItem>
                 </SelectContent>
               </Select>
@@ -140,6 +141,7 @@ export function Reports() {
             <div className="divide-y">
               {tasks.map((task, idx) => {
                 const completed = task.status === 'completed'
+                const forecast = task.status === 'forecast'
                 return (
                   <motion.div
                     key={task.id}
@@ -151,6 +153,8 @@ export function Reports() {
                     <div className="flex flex-wrap items-center gap-2">
                       {completed ? (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-medium">Concluída</span>
+                      ) : forecast ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-blue text-white font-medium">Previsão</span>
                       ) : (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-500 text-white font-medium">Pendente</span>
                       )}
@@ -176,6 +180,20 @@ export function Reports() {
                     {task.observation && (
                       <p className="text-xs mt-1 whitespace-pre-wrap border-l-2 border-brand-green pl-2 text-muted-foreground">
                         <span className="font-medium text-foreground">Obs:</span> {task.observation}
+                      </p>
+                    )}
+                    {forecast && task.forecast_date && (
+                      <p className="text-xs mt-1 whitespace-pre-wrap border-l-2 border-brand-blue pl-2 text-muted-foreground">
+                        <span className="font-medium text-foreground">
+                          Prevista para ser concluída em {formatDate(task.forecast_date)}
+                          {task.forecast_time ? ` às ${task.forecast_time.slice(0, 5)}` : ''}
+                        </span>
+                        {task.forecast_observation && (
+                          <>
+                            {' — '}
+                            {task.forecast_observation}
+                          </>
+                        )}
                       </p>
                     )}
                   </motion.div>

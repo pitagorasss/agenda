@@ -4,8 +4,9 @@ import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { CheckCircle2, MessageSquarePlus, RotateCcw } from 'lucide-react'
+import { CheckCircle2, MessageSquarePlus, RotateCcw, CalendarClock } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
+import { ForecastDialog } from '@/components/agenda/ForecastDialog'
 
 interface Props {
   task: Task
@@ -19,8 +20,10 @@ export function TaskCard({ task, showDate }: Props) {
   const user = useAuthStore((s) => s.user)
   const [editingObs, setEditingObs] = useState(false)
   const [obsText, setObsText] = useState(task.observation ?? '')
+  const [forecastOpen, setForecastOpen] = useState(false)
 
   const completed = task.status === 'completed'
+  const forecast = task.status === 'forecast'
   const currentUserRole = users.find((u) => u.id === user?.id)?.role ?? 'user'
 
   const canModify =
@@ -61,6 +64,11 @@ export function TaskCard({ task, showDate }: Props) {
               Concluída
             </span>
           )}
+          {forecast && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-blue text-white font-medium shrink-0">
+              Prevista
+            </span>
+          )}
           {showDate && task.date && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 font-semibold shrink-0">
               {format(parseISO(task.date), 'dd/MM')}
@@ -91,6 +99,20 @@ export function TaskCard({ task, showDate }: Props) {
         {task.observation && (
           <p className="text-xs mt-1 whitespace-pre-wrap border-l-2 border-brand-green pl-2 text-muted-foreground">
             <span className="font-medium text-foreground">Obs:</span> {task.observation}
+          </p>
+        )}
+        {forecast && task.forecast_date && (
+          <p className="text-xs mt-1 whitespace-pre-wrap border-l-2 border-brand-blue pl-2 text-muted-foreground">
+            <span className="font-medium text-foreground">
+              Prevista para ser concluída em {format(parseISO(task.forecast_date), 'dd/MM/yyyy')}
+              {task.forecast_time ? ` às ${task.forecast_time.slice(0, 5)}` : ''}
+            </span>
+            {task.forecast_observation && (
+              <>
+                {' — '}
+                {task.forecast_observation}
+              </>
+            )}
           </p>
         )}
 
@@ -144,10 +166,15 @@ export function TaskCard({ task, showDate }: Props) {
                 <MessageSquarePlus className="h-3.5 w-3.5" />
                 {task.observation ? 'Editar observação' : 'Adicionar observação'}
               </Button>
+              <Button size="sm" variant="outline" onClick={() => setForecastOpen(true)}>
+                <CalendarClock className="h-3.5 w-3.5" />
+                {forecast ? 'Editar previsão' : 'Previsão de conclusão'}
+              </Button>
             </div>
           )
         )}
       </div>
+      <ForecastDialog task={task} open={forecastOpen} onOpenChange={setForecastOpen} />
     </div>
   )
 }

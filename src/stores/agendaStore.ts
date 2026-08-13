@@ -31,6 +31,10 @@ interface AgendaState {
   deleteTask: (id: string) => Promise<void>
   markTaskCompleted: (id: string, observation?: string) => Promise<boolean>
   markTaskPending: (id: string, observation?: string) => Promise<boolean>
+  markTaskForecast: (
+    id: string,
+    data: { forecast_date: string; forecast_time?: string | null; forecast_observation?: string | null }
+  ) => Promise<boolean>
   fetchEvolutions: (filters?: EvolutionFilters) => Promise<void>
   createEvolution: (data: Partial<EvolutionObservation>) => Promise<EvolutionObservation | null>
   updateEvolution: (id: string, data: Partial<EvolutionObservation>) => Promise<boolean>
@@ -225,6 +229,9 @@ export const useAgendaStore = create<AgendaState>((set) => ({
         completed_at: new Date().toISOString(),
         completed_by: user?.id ?? null,
         observation: observation || null,
+        forecast_date: null,
+        forecast_time: null,
+        forecast_observation: null,
       })
       .eq('id', id)
     if (error) {
@@ -240,6 +247,9 @@ export const useAgendaStore = create<AgendaState>((set) => ({
               completed_at: new Date().toISOString(),
               completed_by: user?.id ?? null,
               observation: observation || null,
+              forecast_date: null,
+              forecast_time: null,
+              forecast_observation: null,
             }
           : t,
       ),
@@ -256,6 +266,9 @@ export const useAgendaStore = create<AgendaState>((set) => ({
         completed_at: null,
         completed_by: null,
         observation: observation || null,
+        forecast_date: null,
+        forecast_time: null,
+        forecast_observation: null,
       })
       .eq('id', id)
       .select('*, category:task_categories(*)')
@@ -272,6 +285,9 @@ export const useAgendaStore = create<AgendaState>((set) => ({
         completed_at: null,
         completed_by: null,
         observation: observation || null,
+        forecast_date: null,
+        forecast_time: null,
+        forecast_observation: null,
       }
       if (!updatedTask) return s
       const isPast = updatedTask.date < today
@@ -283,6 +299,35 @@ export const useAgendaStore = create<AgendaState>((set) => ({
               return exists ? s.overdueTasks.map((t) => (t.id === id ? updatedTask : t)) : [...s.overdueTasks, updatedTask]
             })()
           : s.overdueTasks.filter((t) => t.id !== id),
+      }
+    })
+    return true
+  },
+
+  markTaskForecast: async (id, { forecast_date, forecast_time, forecast_observation }) => {
+    const { data: updated, error } = await supabase
+      .from('tasks')
+      .update({
+        status: 'forecast',
+        forecast_date,
+        forecast_time: forecast_time || null,
+        forecast_observation: forecast_observation || null,
+        completed_at: null,
+        completed_by: null,
+      })
+      .eq('id', id)
+      .select('*, category:task_categories(*)')
+      .single()
+    if (error) {
+      toast.error(error.message)
+      return false
+    }
+    set((s) => {
+      const updatedTask = updated ?? { ...s.tasks.find((t) => t.id === id), status: 'forecast' as const }
+      if (!updatedTask) return s
+      return {
+        tasks: s.tasks.map((t) => (t.id === id ? updatedTask : t)),
+        overdueTasks: s.overdueTasks.map((t) => (t.id === id ? updatedTask : t)),
       }
     })
     return true
