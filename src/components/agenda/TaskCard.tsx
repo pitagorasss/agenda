@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import type { Task } from '@/types'
 import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -57,7 +57,7 @@ export function TaskCard({ task, showDate }: Props) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           {completed && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500 text-white font-medium shrink-0">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-medium shrink-0">
               Concluída
             </span>
           )}

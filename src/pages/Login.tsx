@@ -28,6 +28,13 @@ export function Login() {
         transition={{ duration: 0.4, type: 'spring' }}
         className="w-full max-w-sm"
       >
+        <div className="mb-6 flex justify-center">
+          <img
+            src="/LOGO_TRAVESSIA.png"
+            alt="Logo Travessia"
+            className="h-10 w-auto"
+          />
+        </div>
         <Card>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

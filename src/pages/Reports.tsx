@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -150,7 +150,7 @@ export function Reports() {
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       {completed ? (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500 text-white font-medium">Concluída</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-medium">Concluída</span>
                       ) : (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-500 text-white font-medium">Pendente</span>
                       )}

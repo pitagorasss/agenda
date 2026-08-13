@@ -198,7 +198,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
       )}
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onDone}>Cancelar</Button>
-        <Button type="submit" className="bg-brand-green hover:bg-green-600">
+        <Button type="submit" className="bg-brand-green hover:bg-[#00b85e]">
           {editingId ? 'Salvar' : 'Adicionar'}
         </Button>
       </div>

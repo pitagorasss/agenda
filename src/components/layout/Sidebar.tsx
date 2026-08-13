@@ -27,6 +27,14 @@ export function Sidebar() {
       onMouseLeave={() => setExpanded(false)}
       className="border-r bg-card hidden md:flex flex-col overflow-hidden"
     >
+      <div className="flex h-14 items-center justify-center border-b shrink-0 px-3">
+        <img
+          src="/LOGO_TRAVESSIA.png"
+          alt="Logo Travessia"
+          className="h-8 w-auto object-contain object-left"
+          style={{ width: expanded ? 'auto' : '32px', minWidth: '32px' }}
+        />
+      </div>
       <nav className="flex flex-col gap-1 p-3 pt-4 flex-1 overflow-hidden">
         {links.map(({ to, label, icon: Icon }) => {
           const isActive = location.pathname === to

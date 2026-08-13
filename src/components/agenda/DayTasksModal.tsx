@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useAgendaStore } from '@/stores/agendaStore'
@@ -108,7 +108,7 @@ export function DayTasksModal({ date, onClose }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         {completed && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500 text-white font-medium shrink-0">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-medium shrink-0">
                             Concluída
                           </span>
                         )}
