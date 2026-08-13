@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { RoutineSlotPicker } from '@/components/agenda/RoutineSlotPicker'
 import { parseISO } from 'date-fns'
 
 const DESCRIPTION_MAX = 250
@@ -40,6 +41,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
   const [selectedCategoryId, setSelectedCategoryId] = useState(existing?.category_id ?? '')
   const [newCategoryName, setNewCategoryName] = useState('')
   const [selectedColor, setSelectedColor] = useState(existing?.category?.color ?? '#2563EB')
+  const [routinePickerOpen, setRoutinePickerOpen] = useState(false)
 
   useEffect(() => {
     fetchUsers()
@@ -82,6 +84,22 @@ export function TaskForm({ date, editingId, onDone }: Props) {
     if (categoryMode === 'existing' && selectedCategoryId) {
       updateCategory(selectedCategoryId, { color })
     }
+  }
+
+  const handleAssignedChange = (value: string) => {
+    setAssignedTo(value)
+    if (!editingId && value) {
+      setRoutinePickerOpen(true)
+    }
+  }
+
+  const handleRoutineSelect = (date: string, time: string) => {
+    const d = parseISO(date)
+    setDay(d.getDate())
+    setMonth(d.getMonth())
+    setYear(d.getFullYear())
+    setTime(time)
+    setRoutinePickerOpen(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -189,7 +207,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
         </div>
         <div className="space-y-1">
           <Label>Pessoa Responsável</Label>
-          <Select value={assignedTo} onValueChange={setAssignedTo}>
+          <Select value={assignedTo} onValueChange={handleAssignedChange}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione..." />
             </SelectTrigger>
@@ -287,6 +305,14 @@ export function TaskForm({ date, editingId, onDone }: Props) {
           {editingId ? 'Salvar' : 'Adicionar'}
         </Button>
       </div>
+
+      <RoutineSlotPicker
+        open={routinePickerOpen}
+        userId={assignedTo}
+        onSelect={handleRoutineSelect}
+        onSkip={() => setRoutinePickerOpen(false)}
+        onClose={() => setRoutinePickerOpen(false)}
+      />
     </form>
   )
 }

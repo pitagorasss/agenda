@@ -1,6 +1,7 @@
 import { Gauge } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PRIORITY_LABELS, PRIORITY_WEIGHTS, calcPerformance } from '@/lib/performance'
+import type { RoutinePerformance } from '@/lib/performance'
 import type { Task } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -10,8 +11,8 @@ const priorityDot: Record<'baixa' | 'media' | 'alta', string> = {
   alta: 'bg-red-500',
 }
 
-export function PerformanceCard({ tasks }: { tasks: Task[] }) {
-  const perf = calcPerformance(tasks)
+export function PerformanceCard({ tasks, routine }: { tasks: Task[]; routine?: RoutinePerformance }) {
+  const perf = calcPerformance(tasks, new Date(), routine)
   const statusColor = perf.rate >= 80 ? 'text-brand-green' : perf.rate >= 50 ? 'text-amber-500' : 'text-red-500'
 
   return (
@@ -27,6 +28,7 @@ export function PerformanceCard({ tasks }: { tasks: Task[] }) {
           <span className={cn('text-3xl font-bold', statusColor)}>{perf.rate}%</span>
           <span className="text-xs text-muted-foreground">
             {perf.completed}/{perf.total} concluídas
+            {perf.routineTotal > 0 && ` · ${perf.routineCompleted}/${perf.routineTotal} rotina`}
           </span>
         </div>
         <div className="mt-2 h-2 w-full rounded-full bg-muted overflow-hidden">

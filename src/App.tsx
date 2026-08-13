@@ -10,6 +10,7 @@ import { Users } from '@/pages/Users'
 import { Reports } from '@/pages/Reports'
 import { Evolution } from '@/pages/Evolution'
 import { Settings } from '@/pages/Settings'
+import { Rotina } from '@/pages/Rotina'
 import { useTaskNotifications } from '@/hooks/useTaskNotifications'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -48,6 +49,7 @@ function AnimatedOutlet() {
         <Routes location={location}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/agenda" element={<Agenda />} />
+          <Route path="/rotina" element={<Rotina />} />
           <Route path="/users" element={<Users />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/statistics" element={<Suspense fallback={<Loader />}><Statistics /></Suspense>} />

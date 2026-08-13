@@ -35,6 +35,26 @@ export interface Profile {
   created_at?: string
 }
 
+export interface RoutineSlot {
+  id: string
+  user_id: string
+  weekday: number
+  start_time: string
+  end_time: string
+  title: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export interface RoutineSlotCompletion {
+  id: string
+  slot_id: string
+  user_id: string
+  date: string
+  created_by: string | null
+  created_at: string
+}
+
 export interface EvolutionObservation {
   id: string
   type: 'melhoria' | 'desempenho' | 'atencao'

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
-import type { TaskCategory, Task, Profile, EvolutionObservation } from '@/types'
+import type { TaskCategory, Task, Profile, EvolutionObservation, RoutineSlot, RoutineSlotCompletion } from '@/types'
 
 interface EvolutionFilters {
   responsibleId?: string
@@ -17,6 +17,8 @@ interface AgendaState {
   evolutions: EvolutionObservation[]
   loading: boolean
   users: Profile[]
+  routineSlots: RoutineSlot[]
+  routineCompletions: RoutineSlotCompletion[]
   fetchCategories: () => Promise<void>
   findOrCreateCategory: (name: string, color: string) => Promise<string | null>
   createCategory: (data: Partial<TaskCategory>) => Promise<TaskCategory | null>
@@ -24,6 +26,7 @@ interface AgendaState {
   deleteCategory: (id: string) => Promise<void>
   fetchTasks: (date?: string) => Promise<void>
   fetchTasksByMonth: (year: number, month: number) => Promise<void>
+  fetchTasksBetween: (from: string, to: string) => Promise<void>
   fetchUserTasks: (userId: string) => Promise<void>
   fetchReportedTasks: (filters: { from?: string; to?: string; userId?: string; status?: string }) => Promise<void>
   createTask: (data: Partial<Task>) => Promise<Task | null>
@@ -40,6 +43,12 @@ interface AgendaState {
   updateEvolution: (id: string, data: Partial<EvolutionObservation>) => Promise<boolean>
   deleteEvolution: (id: string) => Promise<boolean>
   fetchUsers: () => Promise<void>
+  fetchRoutineSlots: (userId?: string) => Promise<void>
+  createRoutineSlot: (data: Partial<RoutineSlot>) => Promise<RoutineSlot | null>
+  updateRoutineSlot: (id: string, data: Partial<RoutineSlot>) => Promise<void>
+  deleteRoutineSlot: (id: string) => Promise<void>
+  fetchRoutineCompletions: (userId?: string) => Promise<void>
+  toggleRoutineCompletion: (slotId: string, userId: string, date: string) => Promise<void>
 }
 
 export const useAgendaStore = create<AgendaState>((set) => ({
@@ -49,6 +58,8 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   evolutions: [],
   users: [],
   loading: false,
+  routineSlots: [],
+  routineCompletions: [],
 
   fetchCategories: async () => {
     const { data, error } = await supabase.from('task_categories').select('*').order('name')
@@ -137,8 +148,21 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     set({ loading: false })
   },
 
-  fetchUserTasks: async (userId) => {
+  fetchTasksBetween: async (from, to) => {
     set({ loading: true })
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*, category:task_categories(*)')
+      .gte('date', from)
+      .lte('date', to)
+      .is('deleted_at', null)
+      .order('date')
+      .order('time')
+    if (!error && data) set({ tasks: data })
+    set({ loading: false })
+  },
+
+  fetchUserTasks: async (userId) => {    set({ loading: true })
     const today = format(new Date(), 'yyyy-MM-dd')
     const { data, error } = await supabase
       .from('tasks')
@@ -366,5 +390,86 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   fetchUsers: async () => {
     const { data, error } = await supabase.from('profiles').select('id, email, name, created_at').order('email')
     if (!error && data) set({ users: data })
+  },
+
+  fetchRoutineSlots: async (userId) => {
+    let query = supabase.from('routine_slots').select('*').order('weekday').order('start_time')
+    if (userId) query = query.eq('user_id', userId)
+    const { data, error } = await query
+    if (!error && data) set({ routineSlots: data })
+  },
+
+  createRoutineSlot: async (data) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: result, error } = await supabase
+      .from('routine_slots')
+      .insert({ ...data, created_by: user?.id ?? data.created_by })
+      .select()
+      .single()
+    if (error) {
+      toast.error(error.message)
+      return null
+    }
+    set((s) => ({ routineSlots: [...s.routineSlots, result] }))
+    return result
+  },
+
+  updateRoutineSlot: async (id, data) => {
+    const { error } = await supabase.from('routine_slots').update(data).eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
+    set((s) => ({
+      routineSlots: s.routineSlots.map((sl) => (sl.id === id ? { ...sl, ...data } : sl)),
+    }))
+  },
+
+  deleteRoutineSlot: async (id) => {
+    const { error } = await supabase.from('routine_slots').delete().eq('id', id)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
+    set((s) => ({
+      routineSlots: s.routineSlots.filter((sl) => sl.id !== id),
+      routineCompletions: s.routineCompletions.filter((c) => c.slot_id !== id),
+    }))
+  },
+
+  fetchRoutineCompletions: async (userId) => {
+    let query = supabase.from('routine_slot_completions').select('*').order('date')
+    if (userId) query = query.eq('user_id', userId)
+    const { data, error } = await query
+    if (!error && data) set({ routineCompletions: data })
+  },
+
+  toggleRoutineCompletion: async (slotId, userId, date) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const existing = await supabase
+      .from('routine_slot_completions')
+      .select('id')
+      .eq('slot_id', slotId)
+      .eq('date', date)
+      .maybeSingle()
+    if (existing.data) {
+      const { error } = await supabase.from('routine_slot_completions').delete().eq('id', existing.data.id)
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+      set((s) => ({ routineCompletions: s.routineCompletions.filter((c) => c.id !== existing.data!.id) }))
+      return
+    }
+    const { data: created, error } = await supabase
+      .from('routine_slot_completions')
+      .insert({ slot_id: slotId, user_id: userId, date, created_by: user?.id ?? null })
+      .select()
+      .single()
+    if (error) {
+      toast.error(error.message)
+      return
+    }
+    set((s) => ({ routineCompletions: [...s.routineCompletions, created] }))
   },
 }))
