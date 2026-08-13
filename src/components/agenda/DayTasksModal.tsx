@@ -34,18 +34,17 @@ export function DayTasksModal({ date, onClose }: Props) {
   }, [fetchUsers])
 
   const getUserName = (id: string) => users.find((u) => u.id === id)?.name ?? users.find((u) => u.id === id)?.email ?? 'Usuário'
-  const currentUserRole = users.find((u) => u.id === user?.id)?.role ?? 'user'
 
   const canModify = (taskId: string) => {
     const t = tasks.find((tk) => tk.id === taskId)
     if (!t) return false
-    return t?.created_by === user?.id || t?.assigned_to === user?.id || currentUserRole === 'admin'
+    return t?.created_by === user?.id || t?.assigned_to === user?.id
   }
 
   const canComplete = (taskId: string) => {
     const t = tasks.find((tk) => tk.id === taskId)
     if (!t) return false
-    return (t?.assigned_to === user?.id || t?.created_by === user?.id || currentUserRole === 'admin') && t.status !== 'completed'
+    return (t?.assigned_to === user?.id || t?.created_by === user?.id) && t.status !== 'completed'
   }
 
   const handleDelete = async (id: string) => {

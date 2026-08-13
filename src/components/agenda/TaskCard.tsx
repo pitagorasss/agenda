@@ -16,7 +16,7 @@ interface Props {
 const OBS_MAX = 500
 
 export function TaskCard({ task, showDate }: Props) {
-  const { markTaskCompleted, markTaskPending, updateTask, users } = useAgendaStore()
+  const { markTaskCompleted, markTaskPending, updateTask } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const [editingObs, setEditingObs] = useState(false)
   const [obsText, setObsText] = useState(task.observation ?? '')
@@ -24,10 +24,9 @@ export function TaskCard({ task, showDate }: Props) {
 
   const completed = task.status === 'completed'
   const forecast = task.status === 'forecast'
-  const currentUserRole = users.find((u) => u.id === user?.id)?.role ?? 'user'
 
   const canModify =
-    task.created_by === user?.id || task.assigned_to === user?.id || currentUserRole === 'admin'
+    task.created_by === user?.id || task.assigned_to === user?.id
 
   const canComplete = canModify && !completed
 

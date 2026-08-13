@@ -1,6 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
 import { useAgendaStore } from '@/stores/agendaStore'
-import { useAuthStore } from '@/stores/authStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,18 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
-import { FileBarChart, Users as UsersIcon } from 'lucide-react'
+import { FileBarChart } from 'lucide-react'
 
 export function Reports() {
   const { tasks, fetchReportedTasks, fetchUsers, users, loading } = useAgendaStore()
-  const user = useAuthStore((s) => s.user)
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [status, setStatus] = useState('')
   const [userId, setUserId] = useState('')
-
-  const currentRole = users.find((u) => u.id === user?.id)?.role ?? 'user'
-  const canSeeAll = currentRole === 'admin' || currentRole === 'analista'
 
   useEffect(() => {
     fetchUsers()
@@ -29,14 +24,12 @@ export function Reports() {
     fetchReportedTasks({})
   }, [fetchReportedTasks])
 
-  const effectiveUserId = canSeeAll ? ((userId && userId !== 'all') ? userId : undefined) : user?.id
-
   const applyFilters = () => {
     fetchReportedTasks({
       from: from || undefined,
       to: to || undefined,
       status: (status && status !== 'all') ? status : undefined,
-      userId: effectiveUserId,
+      userId: (userId && userId !== 'all') ? userId : undefined,
     })
   }
 
@@ -45,7 +38,7 @@ export function Reports() {
     setTo('')
     setStatus('')
     setUserId('')
-    fetchReportedTasks({ userId: canSeeAll ? undefined : user?.id })
+    fetchReportedTasks({})
   }
 
   const getUserName = (id: string) => users.find((u) => u.id === id)?.name ?? users.find((u) => u.id === id)?.email ?? '—'
@@ -98,28 +91,20 @@ export function Reports() {
                 </SelectContent>
               </Select>
             </div>
-            {canSeeAll ? (
-              <div className="space-y-1">
-                <Label>Usuário</Label>
-                <Select value={userId} onValueChange={setUserId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {users.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>{u.name ?? u.email}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : (
-              <div className="flex items-end">
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <UsersIcon className="h-3 w-3" /> Seu relatório
-                </p>
-              </div>
-            )}
+            <div className="space-y-1">
+              <Label>Usuário</Label>
+              <Select value={userId} onValueChange={setUserId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {users.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.name ?? u.email}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex gap-2 mt-4">
             <Button onClick={applyFilters}>Filtrar</Button>

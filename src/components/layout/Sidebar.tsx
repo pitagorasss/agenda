@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Calendar, Users, Settings, LogOut, BarChart3, TrendingUp } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Settings, LogOut, BarChart3, TrendingUp, PieChart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/stores/authStore'
@@ -10,6 +10,7 @@ const links = [
   { to: '/agenda', label: 'Agenda', icon: Calendar },
   { to: '/users', label: 'Usuários', icon: Users },
   { to: '/reports', label: 'Relatórios', icon: BarChart3 },
+  { to: '/statistics', label: 'Estatística', icon: PieChart },
   { to: '/evolution', label: 'Evolução', icon: TrendingUp },
   { to: '/settings', label: 'Configurações', icon: Settings },
 ]

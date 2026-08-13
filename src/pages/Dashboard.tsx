@@ -3,8 +3,6 @@ import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
 import { TaskCard } from '@/components/agenda/TaskCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { FileText, Users as UsersIcon, AlertTriangle, ListFilter } from 'lucide-react'
@@ -23,11 +21,8 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 export function Dashboard() {
   const { tasks, overdueTasks, fetchUserTasks, fetchUsers, users, loading } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
-  const navigate = useNavigate()
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-
-  const currentRole = users.find((u) => u.id === user?.id)?.role ?? 'user'
 
   useEffect(() => {
     fetchUsers()
@@ -184,21 +179,6 @@ export function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.3 }}
-        className="flex flex-wrap gap-3"
-      >
-        {currentRole === 'admin' && (
-          <motion.div whileTap={{ scale: 0.95 }}>
-            <Button variant="outline" onClick={() => navigate('/users')}>
-              Usuários
-            </Button>
-          </motion.div>
-        )}
       </motion.div>
     </motion.div>
   )

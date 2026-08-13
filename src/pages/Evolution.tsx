@@ -40,9 +40,6 @@ export function Evolution() {
   const [filterType, setFilterType] = useState('')
   const [filterLevel, setFilterLevel] = useState('')
 
-  const currentRole = users.find((u) => u.id === user?.id)?.role ?? 'user'
-  const canSeeAll = currentRole === 'admin' || currentRole === 'analista'
-
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
@@ -59,7 +56,7 @@ export function Evolution() {
   }
 
   const canModify = (item: { id: string; created_by: string }) =>
-    item.created_by === user?.id || currentRole === 'admin'
+    item.created_by === user?.id
 
   const resetForm = () => {
     setType('melhoria')
@@ -119,7 +116,7 @@ export function Evolution() {
     fetchEvolutions()
   }
 
-  const visibleEvolutions = canSeeAll ? evolutions : evolutions.filter((e) => e.responsible_id === user?.id)
+  const visibleEvolutions = evolutions
 
   return (
     <motion.div

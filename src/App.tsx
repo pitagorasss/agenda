@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { useAuth } from '@/hooks/useAuth'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
@@ -11,6 +12,20 @@ import { Evolution } from '@/pages/Evolution'
 import { Settings } from '@/pages/Settings'
 import { useTaskNotifications } from '@/hooks/useTaskNotifications'
 import { AnimatePresence, motion } from 'framer-motion'
+
+const Statistics = lazy(() => import('@/pages/Statistics').then((m) => ({ default: m.Statistics })))
+
+function Loader() {
+  return (
+    <div className="flex h-40 items-center justify-center">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+        className="h-8 w-8 rounded-full border-4 border-brand-green border-t-transparent"
+      />
+    </div>
+  )
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
@@ -35,6 +50,7 @@ function AnimatedOutlet() {
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/users" element={<Users />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/statistics" element={<Suspense fallback={<Loader />}><Statistics /></Suspense>} />
           <Route path="/evolution" element={<Evolution />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
