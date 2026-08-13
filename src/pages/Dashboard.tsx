@@ -18,13 +18,12 @@ export function Dashboard() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   const currentRole = users.find((u) => u.id === user?.id)?.role ?? 'user'
-  const isAdminOrAnalista = currentRole === 'admin' || currentRole === 'analista'
 
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
 
-  const effectiveUserId = isAdminOrAnalista ? (selectedUserId ?? user?.id ?? '') : (user?.id ?? '')
+  const effectiveUserId = selectedUserId ?? user?.id ?? ''
 
   useEffect(() => {
     if (effectiveUserId) fetchUserTasks(effectiveUserId)
@@ -56,26 +55,27 @@ export function Dashboard() {
         <p className="text-muted-foreground capitalize">{todayFormatted}</p>
       </div>
 
-      {isAdminOrAnalista ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <UsersIcon className="h-4 w-4 text-brand-blue" />
-          {users.map((u) => (
+      <div className="flex flex-wrap items-center gap-2">
+        <UsersIcon className="h-4 w-4 text-brand-blue" />
+        {users.map((u) => {
+          const active = effectiveUserId === u.id
+          return (
             <button
               key={u.id}
               type="button"
               onClick={() => setSelectedUserId(u.id)}
               className={cn(
                 'rounded-full border px-3 py-1 text-sm transition-colors',
-                selectedUserId === u.id
+                active
                   ? 'border-brand-green bg-brand-green/10 text-brand-green'
                   : 'border-input hover:bg-accent',
               )}
             >
               {u.name ?? u.email}
             </button>
-          ))}
-        </div>
-      ) : null}
+          )
+        })}
+      </div>
 
       {overdueTasks.length > 0 && (
         <motion.div
