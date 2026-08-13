@@ -225,18 +225,23 @@ export function DayTasksModal({ date, onClose }: Props) {
               })}
             </AnimatePresence>
 
-            {showAddForm ? (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <TaskForm
-                  date={dateKey}
-                  editingId={null}
-                  onDone={() => setShowAddForm(false)}
-                />
-              </motion.div>
-            ) : (
-              <Button className="w-full" variant="outline" onClick={() => setShowAddForm(true)}>
-                <Plus className="h-4 w-4" /> Adicionar Tarefa
-              </Button>
+            <Button className="w-full" variant="outline" onClick={() => setShowAddForm(true)}>
+              <Plus className="h-4 w-4" /> Adicionar Tarefa
+            </Button>
+
+            {showAddForm && (
+              <Dialog open onOpenChange={(v) => { if (!v) setShowAddForm(false) }}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Adicionar Tarefa</DialogTitle>
+                  </DialogHeader>
+                  <TaskForm
+                    date={dateKey}
+                    editingId={null}
+                    onDone={() => setShowAddForm(false)}
+                  />
+                </DialogContent>
+              </Dialog>
             )}
           </div>
         </DialogContent>

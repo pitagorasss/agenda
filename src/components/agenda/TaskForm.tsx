@@ -6,10 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { parseISO } from 'date-fns'
 
 const DESCRIPTION_MAX = 250
 
 const colorPalette = ['#DC2626', '#2563EB', '#16A34A', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#6B7280', '#EF4444']
+
+const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
 interface Props {
   date: string
@@ -22,9 +25,15 @@ export function TaskForm({ date, editingId, onDone }: Props) {
   const user = useAuthStore((s) => s.user)
   const existing = editingId ? tasks.find((t) => t.id === editingId) : null
 
+  const initialDate = existing?.date ?? date
+  const parsedDate = parseISO(initialDate)
+
   const [title, setTitle] = useState(existing?.title ?? '')
   const [description, setDescription] = useState(existing?.description ?? '')
   const [time, setTime] = useState(existing?.time ?? '')
+  const [day, setDay] = useState(parsedDate.getDate())
+  const [month, setMonth] = useState(parsedDate.getMonth())
+  const [year, setYear] = useState(parsedDate.getFullYear())
   const [assignedTo, setAssignedTo] = useState(existing?.assigned_to ?? '')
   const [categoryMode, setCategoryMode] = useState<'none' | 'existing' | 'new'>(existing?.category_id ? 'existing' : 'none')
   const [selectedCategoryId, setSelectedCategoryId] = useState(existing?.category_id ?? '')
@@ -34,6 +43,24 @@ export function TaskForm({ date, editingId, onDone }: Props) {
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const currentYear = new Date().getFullYear()
+  const yearOptions = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2]
+
+  const handleMonthChange = (value: string) => {
+    const m = Number(value) - 1
+    setMonth(m)
+    const max = new Date(year, m + 1, 0).getDate()
+    if (day > max) setDay(max)
+  }
+
+  const handleYearChange = (value: string) => {
+    const y = Number(value)
+    setYear(y)
+    const max = new Date(y, month + 1, 0).getDate()
+    if (day > max) setDay(max)
+  }
 
   const handleCategoryChange = (value: string) => {
     if (value === 'none') {
@@ -69,13 +96,15 @@ export function TaskForm({ date, editingId, onDone }: Props) {
       if (newId) categoryId = newId
     }
 
+    const taskDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
     const taskData = {
       title,
       description: description || null,
       time: time || null,
       category_id: categoryId,
       assigned_to: assignedTo || null,
-      date,
+      date: taskDate,
       created_by: user?.id,
     }
 
@@ -109,6 +138,47 @@ export function TaskForm({ date, editingId, onDone }: Props) {
           autoGrow
           maxLength={DESCRIPTION_MAX}
         />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-1">
+          <Label>Dia</Label>
+          <Select value={String(day)} onValueChange={(v) => setDay(Number(v))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Dia" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
+                <SelectItem key={d} value={String(d)}>{d}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>Mês</Label>
+          <Select value={String(month + 1)} onValueChange={handleMonthChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Mês" />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTH_NAMES.map((m, i) => (
+                <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>Ano</Label>
+          <Select value={String(year)} onValueChange={handleYearChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Ano" />
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((y) => (
+                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
