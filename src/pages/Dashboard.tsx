@@ -113,6 +113,8 @@ export function Dashboard() {
         })}
       </div>
 
+      <PerformanceCard tasks={tasks} />
+
       {showOverdue && overdueTasks.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -147,8 +149,6 @@ export function Dashboard() {
           </Card>
         </motion.div>
       )}
-
-      <PerformanceCard tasks={tasks} />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
