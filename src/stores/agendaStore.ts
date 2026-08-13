@@ -139,25 +139,18 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   fetchUserTasks: async (userId) => {
     set({ loading: true })
     const today = format(new Date(), 'yyyy-MM-dd')
-    const [tasksResult, overdueResult] = await Promise.all([
-      supabase
-        .from('tasks')
-        .select('*, category:task_categories(*)')
-        .eq('assigned_to', userId)
-        .gte('date', today)
-        .order('date')
-        .order('time'),
-      supabase
-        .from('tasks')
-        .select('*, category:task_categories(*)')
-        .eq('assigned_to', userId)
-        .lt('date', today)
-        .eq('status', 'pending')
-        .order('date')
-        .order('time'),
-    ])
-    if (!tasksResult.error && tasksResult.data) set({ tasks: tasksResult.data })
-    if (!overdueResult.error && overdueResult.data) set({ overdueTasks: overdueResult.data })
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*, category:task_categories(*)')
+      .eq('assigned_to', userId)
+      .order('date')
+      .order('time')
+    if (!error && data) {
+      set({
+        tasks: data,
+        overdueTasks: data.filter((t) => t.date < today && t.status === 'pending'),
+      })
+    }
     set({ loading: false })
   },
 

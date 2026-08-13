@@ -7,15 +7,25 @@ import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { FileText, Users as UsersIcon, AlertTriangle } from 'lucide-react'
+import { FileText, Users as UsersIcon, AlertTriangle, ListFilter } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+
+type StatusFilter = 'all' | 'pending' | 'forecast' | 'completed'
+
+const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'pending', label: 'Pendentes' },
+  { value: 'forecast', label: 'Previstas' },
+  { value: 'completed', label: 'Concluídas' },
+]
 
 export function Dashboard() {
   const { tasks, overdueTasks, fetchUserTasks, fetchUsers, users, loading } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   const currentRole = users.find((u) => u.id === user?.id)?.role ?? 'user'
 
@@ -29,7 +39,14 @@ export function Dashboard() {
     if (effectiveUserId) fetchUserTasks(effectiveUserId)
   }, [effectiveUserId, fetchUserTasks])
 
-  const selectedUser = users.find((u) => u.id === effectiveUserId)
+  const todayKey = format(new Date(), 'yyyy-MM-dd')
+
+  const overdueIds = new Set(overdueTasks.map((t) => t.id))
+  const showOverdue = statusFilter === 'all' || statusFilter === 'pending'
+  const filteredTasks = tasks
+    .filter((t) => (statusFilter === 'all' ? true : t.status === statusFilter))
+    .filter((t) => (statusFilter === 'all' || statusFilter === 'pending' ? t.date >= todayKey : true))
+    .filter((t) => !showOverdue || !overdueIds.has(t.id))
 
   const todayFormatted = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })
 
@@ -77,7 +94,29 @@ export function Dashboard() {
         })}
       </div>
 
-      {overdueTasks.length > 0 && (
+      <div className="flex flex-wrap items-center gap-2 border-t border-b py-2.5">
+        <ListFilter className="h-4 w-4 text-brand-blue" />
+        {STATUS_FILTERS.map((f) => {
+          const active = statusFilter === f.value
+          return (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setStatusFilter(f.value)}
+              className={cn(
+                'rounded-full border px-3 py-1 text-sm transition-colors',
+                active
+                  ? 'border-brand-green bg-brand-green/10 text-brand-green'
+                  : 'border-input hover:bg-accent',
+              )}
+            >
+              {f.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {showOverdue && overdueTasks.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -121,18 +160,21 @@ export function Dashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4 text-brand-blue" />
-              Tarefas de {selectedUser ? (selectedUser.name ?? selectedUser.email) : 'você'}
+              Tarefas de hoje
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                ({filteredTasks.length})
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <p className="text-sm text-muted-foreground">Carregando...</p>
-            ) : tasks.length === 0 ? (
+            ) : filteredTasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhuma tarefa para exibir.</p>
             ) : (
               <motion.div variants={container} initial="hidden" animate="show" className="space-y-2">
                 <AnimatePresence mode="popLayout">
-                  {tasks.map((task) => (
+                  {filteredTasks.map((task) => (
                     <motion.div key={task.id} variants={item} layout exit={{ opacity: 0, x: -20 }}>
                       <TaskCard task={task} />
                     </motion.div>
