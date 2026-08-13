@@ -9,10 +9,12 @@ import { Users } from '@/pages/Users'
 import { Reports } from '@/pages/Reports'
 import { Evolution } from '@/pages/Evolution'
 import { Settings } from '@/pages/Settings'
+import { useTaskNotifications } from '@/hooks/useTaskNotifications'
 import { AnimatePresence, motion } from 'framer-motion'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
+  useTaskNotifications()
   if (!user) return <Navigate to="/login" replace />
   return <>{children}</>
 }
