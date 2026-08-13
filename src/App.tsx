@@ -21,7 +21,7 @@ function Loader() {
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-        className="h-8 w-8 rounded-full border-4 border-brand-green border-t-transparent"
+        className="h-8 w-8 rounded-full border-4 border-brand-blue border-t-transparent"
       />
     </div>
   )
@@ -70,7 +70,7 @@ function AppRoutes() {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="h-8 w-8 rounded-full border-4 border-brand-green border-t-transparent"
+          className="h-8 w-8 rounded-full border-4 border-brand-blue border-t-transparent"
         />
       </div>
     )

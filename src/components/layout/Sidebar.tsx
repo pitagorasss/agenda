@@ -48,14 +48,14 @@ export function Sidebar() {
                 'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                 !expanded && 'justify-center px-0',
                 isActive
-                  ? 'text-brand-green'
+                  ? 'text-brand-blue'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {isActive && (
                 <motion.div
                   layoutId="sidebar-active"
-                  className="absolute inset-0 rounded-lg bg-brand-green/10 dark:bg-brand-green/20"
+                  className="absolute inset-0 rounded-lg bg-brand-blue/10 dark:bg-brand-blue/20"
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                 />
               )}

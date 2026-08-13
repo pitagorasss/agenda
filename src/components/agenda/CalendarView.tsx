@@ -79,9 +79,9 @@ export function CalendarView() {
               whileTap={{ scale: 0.95 }}
               className={`relative min-h-[90px] p-1.5 text-left transition-colors bg-background hover:bg-accent focus:z-10 ${
                 !isCurrentMonth ? 'opacity-40' : ''
-              } ${isToday(d) ? 'ring-2 ring-brand-green ring-inset' : ''}`}
+              } ${isToday(d) ? 'ring-2 ring-brand-blue ring-inset' : ''}`}
             >
-              <span className={`text-xs font-medium ${isToday(d) ? 'text-brand-green' : ''}`}>
+              <span className={`text-xs font-medium ${isToday(d) ? 'text-brand-blue' : ''}`}>
                 {format(d, 'd')}
               </span>
               <div className="mt-1 space-y-1">

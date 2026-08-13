@@ -3,8 +3,9 @@ import type { Task } from '@/types'
 import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
+import { PriorityBadge } from '@/components/agenda/PriorityBadge'
 import { Textarea } from '@/components/ui/textarea'
-import { CheckCircle2, MessageSquarePlus, RotateCcw, CalendarClock } from 'lucide-react'
+import { CheckCircle2, MessageSquarePlus, CalendarClock } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { ForecastDialog } from '@/components/agenda/ForecastDialog'
 
@@ -16,7 +17,7 @@ interface Props {
 const OBS_MAX = 500
 
 export function TaskCard({ task, showDate }: Props) {
-  const { markTaskCompleted, markTaskPending, updateTask } = useAgendaStore()
+  const { markTaskCompleted, updateTask } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const [editingObs, setEditingObs] = useState(false)
   const [obsText, setObsText] = useState(task.observation ?? '')
@@ -32,14 +33,6 @@ export function TaskCard({ task, showDate }: Props) {
 
   const handleComplete = async () => {
     const ok = await markTaskCompleted(task.id, obsText)
-    if (ok) {
-      setEditingObs(false)
-      setObsText('')
-    }
-  }
-
-  const handlePending = async () => {
-    const ok = await markTaskPending(task.id, obsText)
     if (ok) {
       setEditingObs(false)
       setObsText('')
@@ -68,6 +61,7 @@ export function TaskCard({ task, showDate }: Props) {
               Prevista
             </span>
           )}
+          <PriorityBadge priority={task.priority} />
           {showDate && task.date && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 font-semibold shrink-0">
               {format(parseISO(task.date), 'dd/MM')}
@@ -137,11 +131,6 @@ export function TaskCard({ task, showDate }: Props) {
                   Concluir
                 </Button>
               )}
-              {completed && canModify && (
-                <Button size="sm" variant="secondary" onClick={handlePending}>
-                  <RotateCcw className="h-3.5 w-3.5" /> Marcar pendente
-                </Button>
-              )}
             </div>
           </div>
         ) : (
@@ -150,11 +139,6 @@ export function TaskCard({ task, showDate }: Props) {
               {canComplete && (
                 <Button size="sm" variant="outline" onClick={handleComplete}>
                   <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
-                </Button>
-              )}
-              {completed && (
-                <Button size="sm" variant="outline" onClick={() => { setEditingObs(true); setObsText('') }}>
-                  <RotateCcw className="h-3.5 w-3.5" /> Marcar pendente
                 </Button>
               )}
               <Button

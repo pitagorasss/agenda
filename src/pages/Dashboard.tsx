@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
 import { TaskCard } from '@/components/agenda/TaskCard'
+import { PerformanceCard } from '@/components/agenda/PerformanceCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -39,6 +40,7 @@ export function Dashboard() {
   const overdueIds = new Set(overdueTasks.map((t) => t.id))
   const showOverdue = statusFilter === 'all' || statusFilter === 'pending'
   const filteredTasks = tasks
+    .filter((t) => !t.deleted_at)
     .filter((t) => (statusFilter === 'all' ? true : t.status === statusFilter))
     .filter((t) => (statusFilter === 'all' || statusFilter === 'pending' ? t.date >= todayKey : true))
     .filter((t) => !showOverdue || !overdueIds.has(t.id))
@@ -145,6 +147,8 @@ export function Dashboard() {
           </Card>
         </motion.div>
       )}
+
+      <PerformanceCard tasks={tasks} />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

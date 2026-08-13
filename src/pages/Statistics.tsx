@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts'
 import { PieChart as PieChartIcon, TrendingUp, CheckCircle2, Clock, Target } from 'lucide-react'
+import { PerformanceCard } from '@/components/agenda/PerformanceCard'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -159,6 +160,8 @@ export function Statistics() {
           </motion.div>
         ))}
       </div>
+
+      <PerformanceCard tasks={tasks} />
 
       <Card>
         <CardHeader className="pb-3">

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { FileBarChart } from 'lucide-react'
+import { PriorityBadge } from '@/components/agenda/PriorityBadge'
 
 export function Reports() {
   const { tasks, fetchReportedTasks, fetchUsers, users, loading } = useAgendaStore()
@@ -143,6 +144,7 @@ export function Reports() {
                       ) : (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-500 text-white font-medium">Pendente</span>
                       )}
+                      <PriorityBadge priority={task.priority} />
                       <span className="text-sm font-medium">{task.title}</span>
                       {task.category && (
                         <span

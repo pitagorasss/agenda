@@ -76,7 +76,7 @@ export function Settings() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Bell className="h-4 w-4 text-brand-green" />
+              <Bell className="h-4 w-4 text-brand-blue" />
               Notificações
             </CardTitle>
           </CardHeader>
@@ -128,7 +128,7 @@ export function Settings() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Palette className="h-4 w-4 text-brand-green" />
+              <Palette className="h-4 w-4 text-brand-blue" />
               Aparência
             </CardTitle>
           </CardHeader>

@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
             </pre>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 inline-flex h-9 items-center justify-center rounded-md bg-brand-green px-4 text-sm font-medium text-white shadow hover:bg-[#00b85e]"
+              className="mt-4 inline-flex h-9 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-medium text-white shadow hover:bg-blue-700"
             >
               Recarregar página
             </button>

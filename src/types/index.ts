@@ -17,12 +17,14 @@ export interface Task {
   assigned_to: string | null
   created_by: string
   status?: 'pending' | 'forecast' | 'completed' | null
+  priority?: 'baixa' | 'media' | 'alta'
   observation?: string | null
   forecast_date?: string | null
   forecast_time?: string | null
   forecast_observation?: string | null
   completed_at?: string | null
   completed_by?: string | null
+  deleted_at?: string | null
   created_at: string
 }
 

@@ -32,7 +32,7 @@ export function DashboardLayout() {
                   cn(
                     'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
                     isActive
-                      ? 'bg-brand-green/10 text-brand-green'
+                      ? 'bg-brand-blue/10 text-brand-blue'
                       : 'text-muted-foreground hover:text-foreground',
                   )
                 }

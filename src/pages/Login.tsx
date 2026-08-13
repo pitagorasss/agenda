@@ -75,7 +75,7 @@ export function Login() {
               {isSignUp ? 'Já tem conta?' : 'Não tem conta?'}{' '}
               <button
                 onClick={() => { setIsSignUp(!isSignUp); setError(null) }}
-                className="text-brand-green hover:underline font-medium"
+                className="text-brand-blue hover:underline font-medium"
               >
                 {isSignUp ? 'Fazer login' : 'Criar conta'}
               </button>

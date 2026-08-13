@@ -35,6 +35,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
   const [month, setMonth] = useState(parsedDate.getMonth())
   const [year, setYear] = useState(parsedDate.getFullYear())
   const [assignedTo, setAssignedTo] = useState(existing?.assigned_to ?? '')
+  const [priority, setPriority] = useState<'baixa' | 'media' | 'alta'>(existing?.priority ?? 'media')
   const [categoryMode, setCategoryMode] = useState<'none' | 'existing' | 'new'>(existing?.category_id ? 'existing' : 'none')
   const [selectedCategoryId, setSelectedCategoryId] = useState(existing?.category_id ?? '')
   const [newCategoryName, setNewCategoryName] = useState('')
@@ -104,6 +105,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
       time: time || null,
       category_id: categoryId,
       assigned_to: assignedTo || null,
+      priority,
       date: taskDate,
       created_by: user?.id,
     }
@@ -180,7 +182,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
           </Select>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <div className="space-y-1">
           <Label>Horário</Label>
           <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
@@ -198,6 +200,19 @@ export function TaskForm({ date, editingId, onDone }: Props) {
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-1">
+          <Label>Prioridade</Label>
+          <Select value={priority} onValueChange={(v) => setPriority(v as 'baixa' | 'media' | 'alta')}>
+            <SelectTrigger>
+              <SelectValue placeholder="Prioridade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="baixa">Baixa</SelectItem>
+              <SelectItem value="media">Média</SelectItem>
+              <SelectItem value="alta">Alta</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="space-y-1">
         <Label>Categoria</Label>
@@ -211,7 +226,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
           <SelectContent>
             <SelectItem value="none">Sem categoria</SelectItem>
             <SelectItem value="__new__">
-              <span className="text-brand-green">+ Criar nova categoria</span>
+              <span className="text-brand-blue">+ Criar nova categoria</span>
             </SelectItem>
             {categories.map((c) => (
               <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -268,7 +283,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
       )}
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onDone}>Cancelar</Button>
-        <Button type="submit" className="bg-brand-green hover:bg-[#00b85e]">
+        <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
           {editingId ? 'Salvar' : 'Adicionar'}
         </Button>
       </div>

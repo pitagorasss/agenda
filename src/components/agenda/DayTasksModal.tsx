@@ -7,9 +7,10 @@ import { TaskForm } from './TaskForm'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Pencil, Trash2, Plus, User, CheckCircle2, MessageSquarePlus, RotateCcw, CalendarClock } from 'lucide-react'
+import { Pencil, Trash2, Plus, User, CheckCircle2, MessageSquarePlus, CalendarClock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ForecastDialog } from '@/components/agenda/ForecastDialog'
+import { PriorityBadge } from '@/components/agenda/PriorityBadge'
 
 interface Props {
   date: Date
@@ -19,7 +20,7 @@ interface Props {
 const OBS_MAX = 500
 
 export function DayTasksModal({ date, onClose }: Props) {
-  const { tasks, deleteTask, markTaskCompleted, markTaskPending, updateTask, users, fetchUsers } = useAgendaStore()
+  const { tasks, deleteTask, markTaskCompleted, updateTask, users, fetchUsers } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingTask, setEditingTask] = useState<string | null>(null)
@@ -53,14 +54,6 @@ export function DayTasksModal({ date, onClose }: Props) {
 
   const handleComplete = async (id: string) => {
     const ok = await markTaskCompleted(id, obsText)
-    if (ok) {
-      setObsTaskId(null)
-      setObsText('')
-    }
-  }
-
-  const handlePending = async (id: string) => {
-    const ok = await markTaskPending(id, obsText)
     if (ok) {
       setObsTaskId(null)
       setObsText('')
@@ -118,6 +111,7 @@ export function DayTasksModal({ date, onClose }: Props) {
                             Prevista
                           </span>
                         )}
+                        <PriorityBadge priority={task.priority} />
                         {task.time && (
                           <span className="text-xs font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                             {task.time.slice(0, 5)}
@@ -192,11 +186,6 @@ export function DayTasksModal({ date, onClose }: Props) {
                             <Button size="sm" variant="outline" onClick={() => handleSaveObservation(task.id)}>
                               Salvar
                             </Button>
-                            {completed && canModify(task.id) && (
-                              <Button size="sm" variant="secondary" onClick={() => handlePending(task.id)}>
-                                <RotateCcw className="h-3.5 w-3.5" /> Marcar pendente
-                              </Button>
-                            )}
                             {canComplete(task.id) && (
                               <Button size="sm" onClick={() => handleComplete(task.id)}>
                                 Concluir
@@ -215,18 +204,7 @@ export function DayTasksModal({ date, onClose }: Props) {
                           title="Concluir / observação"
                           onClick={() => { setObsTaskId(task.id); setObsText(task.observation ?? '') }}
                         >
-                          <CheckCircle2 className={`h-3 w-3 ${completed ? 'text-muted-foreground' : 'text-brand-green'}`} />
-                        </Button>
-                      )}
-                      {completed && canModify(task.id) && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          title="Marcar como pendente"
-                          onClick={() => { setObsTaskId(task.id); setObsText(task.observation ?? '') }}
-                        >
-                          <RotateCcw className="h-3 w-3 text-amber-500" />
+                          <CheckCircle2 className="h-3 w-3 text-brand-green" />
                         </Button>
                       )}
                       {canModify(task.id) && (

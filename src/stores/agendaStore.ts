@@ -113,7 +113,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
 
   fetchTasks: async (date) => {
     set({ loading: true })
-    let query = supabase.from('tasks').select('*, category:task_categories(*)').order('time')
+    let query = supabase.from('tasks').select('*, category:task_categories(*)').is('deleted_at', null).order('time')
     if (date) query = query.eq('date', date)
     const { data, error } = await query
     if (!error && data) set({ tasks: data })
@@ -130,6 +130,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       .select('*, category:task_categories(*)')
       .gte('date', start)
       .lte('date', end)
+      .is('deleted_at', null)
       .order('date')
       .order('time')
     if (!error && data) set({ tasks: data })
@@ -148,7 +149,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     if (!error && data) {
       set({
         tasks: data,
-        overdueTasks: data.filter((t) => t.date < today && t.status === 'pending'),
+        overdueTasks: data.filter((t) => t.date < today && t.status === 'pending' && !t.deleted_at),
       })
     }
     set({ loading: false })
@@ -225,6 +226,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
         forecast_date: null,
         forecast_time: null,
         forecast_observation: null,
+        deleted_at: new Date().toISOString(),
       })
       .eq('id', id)
     if (error) {
@@ -232,20 +234,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       return false
     }
     set((s) => ({
-      tasks: s.tasks.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              status: 'completed',
-              completed_at: new Date().toISOString(),
-              completed_by: user?.id ?? null,
-              observation: observation || null,
-              forecast_date: null,
-              forecast_time: null,
-              forecast_observation: null,
-            }
-          : t,
-      ),
+      tasks: s.tasks.filter((t) => t.id !== id),
       overdueTasks: s.overdueTasks.filter((t) => t.id !== id),
     }))
     return true
