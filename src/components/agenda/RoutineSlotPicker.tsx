@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { format, addDays, startOfWeek } from 'date-fns'
+import { format, addDays, startOfWeek, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { supabase } from '@/lib/supabase'
 import { useAgendaStore } from '@/stores/agendaStore'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -23,24 +24,47 @@ function fmtTime(t: string) {
 interface Props {
   open: boolean
   userId: string
+  /** Data da tarefa — define a semana dos horários exibidos. */
+  date?: string
   onSelect: (date: string, time: string) => void
   onSkip: () => void
   onClose: () => void
 }
 
-export function RoutineSlotPicker({ open, userId, onSelect, onSkip, onClose }: Props) {
-  const { routineSlots, fetchRoutineSlots, tasks } = useAgendaStore()
+export function RoutineSlotPicker({ open, userId, date, onSelect, onSkip, onClose }: Props) {
+  const { routineSlots, fetchRoutineSlots } = useAgendaStore()
   const [loading, setLoading] = useState(false)
+  const [occupiedKeys, setOccupiedKeys] = useState<Set<string>>(new Set())
+
+  const weekStart = useMemo(
+    () => (date ? startOfWeek(parseISO(date), { weekStartsOn: 0 }) : startOfWeek(new Date(), { weekStartsOn: 0 })),
+    [date],
+  )
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart])
 
   useEffect(() => {
-    if (open && userId) {
-      setLoading(true)
-      fetchRoutineSlots(userId).finally(() => setLoading(false))
-    }
-  }, [open, userId, fetchRoutineSlots])
-
-  const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 0 }), [])
-  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart])
+    if (!open || !userId) return
+    setLoading(true)
+    Promise.all([
+      fetchRoutineSlots(userId),
+      supabase
+        .from('tasks')
+        .select('id, date, time, status, deleted_at')
+        .eq('assigned_to', userId)
+        .gte('date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('date', format(addDays(weekStart, 6), 'yyyy-MM-dd')),
+    ])
+      .then(([, { data: userTasks }]) => {
+        setOccupiedKeys(
+          new Set(
+            (userTasks ?? [])
+              .filter((t) => !t.deleted_at && t.status !== 'completed' && toMin(t.time) !== null)
+              .map((t) => `${t.date}|${toMin(t.time)}`),
+          ),
+        )
+      })
+      .finally(() => setLoading(false))
+  }, [open, userId, weekStart, fetchRoutineSlots])
 
   const slots = useMemo(() => routineSlots.filter((s) => s.user_id === userId), [routineSlots, userId])
 
@@ -56,22 +80,15 @@ export function RoutineSlotPicker({ open, userId, onSelect, onSkip, onClose }: P
     return out.sort((a, b) => (a.dateKey < b.dateKey ? -1 : 1))
   }, [weekDays, slots])
 
-  const occupiedKeys = useMemo(() => {
-    const set = new Set<string>()
-    for (const t of tasks) {
-      if (t.assigned_to !== userId || t.deleted_at) continue
-      const m = toMin(t.time)
-      if (m === null) continue
-      for (const s of slots) {
-        if (m >= toMin(s.start_time)! && m < toMin(s.end_time)!) {
-          set.add(`${t.date}|${s.id}`)
-        }
-      }
+  const free = occurrences.filter((o) => {
+    for (const key of occupiedKeys) {
+      const [occDate, occMin] = key.split('|')
+      if (occDate !== o.dateKey) continue
+      const m = Number(occMin)
+      if (m >= toMin(o.slot.start_time)! && m < toMin(o.slot.end_time)!) return false
     }
-    return set
-  }, [tasks, userId, slots])
-
-  const free = occurrences.filter((o) => !occupiedKeys.has(`${o.dateKey}|${o.slot.id}`))
+    return true
+  })
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>

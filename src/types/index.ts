@@ -64,3 +64,13 @@ export interface EvolutionObservation {
   created_by: string
   created_at: string
 }
+
+export interface AppNotification {
+  id: string
+  user_id: string
+  task_id: string | null
+  title: string
+  actor_id: string | null
+  read: boolean
+  created_at: string
+}

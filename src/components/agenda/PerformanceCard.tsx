@@ -1,19 +1,39 @@
+import { useMemo, useState } from 'react'
 import { Gauge } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PRIORITY_LABELS, PRIORITY_WEIGHTS, calcPerformance } from '@/lib/performance'
-import type { RoutinePerformance } from '@/lib/performance'
+import { calcPerformance, yesterdayKey, todayKey } from '@/lib/performance'
 import type { Task } from '@/types'
 import { cn } from '@/lib/utils'
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
-const priorityDot: Record<'baixa' | 'media' | 'alta', string> = {
-  baixa: 'bg-emerald-500',
-  media: 'bg-amber-500',
-  alta: 'bg-red-500',
+type Period = 'd1' | 'today'
+
+interface PerformanceCardProps {
+  tasks: Task[]
+  /** Filtro por data. Padrão: seletor D-1/Hoje. Passe uma string para fixar a data ou `null` para todas as tarefas. */
+  dateKey?: string | null
 }
 
-export function PerformanceCard({ tasks, routine }: { tasks: Task[]; routine?: RoutinePerformance }) {
-  const perf = calcPerformance(tasks, new Date(), routine)
+export function PerformanceCard({ tasks, dateKey }: PerformanceCardProps) {
+  const [period, setPeriod] = useState<Period>('d1')
+
+  const fixedDate = typeof dateKey === 'string' ? dateKey : null
+  const allTasks = dateKey === null
+
+  const resolvedDateKey = fixedDate ?? (period === 'd1' ? yesterdayKey() : todayKey())
+  const effectiveDateKey = allTasks ? null : resolvedDateKey
+
+  const perf = useMemo(
+    () => calcPerformance(tasks, effectiveDateKey),
+    [tasks, effectiveDateKey],
+  )
+
   const statusColor = perf.rate >= 80 ? 'text-brand-green' : perf.rate >= 50 ? 'text-amber-500' : 'text-red-500'
+  const dateLabel = effectiveDateKey
+    ? format(parseISO(`${effectiveDateKey}T00:00:00`), "EEEE, dd 'de' MMMM", { locale: ptBR })
+    : null
+  const isD1 = effectiveDateKey ? period === 'd1' : false
 
   return (
     <Card>
@@ -21,6 +41,30 @@ export function PerformanceCard({ tasks, routine }: { tasks: Task[]; routine?: R
         <CardTitle className="text-base flex items-center gap-2">
           <Gauge className="h-4 w-4 text-brand-blue" />
           Performance
+          {dateLabel && (
+            <span className="text-xs font-normal text-muted-foreground capitalize">
+              · {dateLabel} ({isD1 ? 'D-1' : 'Hoje'})
+            </span>
+          )}
+          {!fixedDate && !allTasks && (
+            <div className="ml-auto flex items-center gap-0.5 rounded-full bg-muted p-0.5">
+              {(['d1', 'today'] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPeriod(p)}
+                  className={cn(
+                    'rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+                    period === p
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {p === 'd1' ? 'D-1' : 'Hoje'}
+                </button>
+              ))}
+            </div>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -28,7 +72,12 @@ export function PerformanceCard({ tasks, routine }: { tasks: Task[]; routine?: R
           <span className={cn('text-3xl font-bold', statusColor)}>{perf.rate}%</span>
           <span className="text-xs text-muted-foreground">
             {perf.completed}/{perf.total} concluídas
-            {perf.routineTotal > 0 && ` · ${perf.routineCompleted}/${perf.routineTotal} rotina`}
+            {perf.overdue > 0 && (
+              <span className="text-amber-500">
+                {' '}· {perf.overdue} {isD1 ? 'atrasada' : 'pendente'}
+                {perf.overdue > 1 ? 's' : ''}
+              </span>
+            )}
           </span>
         </div>
         <div className="mt-2 h-2 w-full rounded-full bg-muted overflow-hidden">
@@ -40,23 +89,6 @@ export function PerformanceCard({ tasks, routine }: { tasks: Task[]; routine?: R
             style={{ width: `${perf.rate}%` }}
           />
         </div>
-        {perf.penalty > 0 ? (
-          <ul className="mt-3 space-y-1 text-xs">
-            {perf.overdue.map((p) => (
-              <li key={p.priority} className="flex items-center gap-2 text-muted-foreground">
-                <span className={cn('h-2 w-2 rounded-full shrink-0', priorityDot[p.priority])} />
-                {PRIORITY_LABELS[p.priority]}: {p.count} atrasada{p.count > 1 ? 's' : ''} (−{p.points}%
-                {PRIORITY_WEIGHTS[p.priority] > 1 ? ` × ${PRIORITY_WEIGHTS[p.priority]}` : ''})
-              </li>
-            ))}
-            <li className="pt-1 text-foreground font-medium flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-muted-foreground shrink-0" />
-              Penalidade total: −{perf.penalty}%
-            </li>
-          </ul>
-        ) : (
-          <p className="mt-3 text-xs text-muted-foreground">Sem tarefas atrasadas penalizando a performance.</p>
-        )}
       </CardContent>
     </Card>
   )

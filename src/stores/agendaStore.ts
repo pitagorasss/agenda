@@ -10,6 +10,9 @@ interface EvolutionFilters {
   level?: string
 }
 
+let userTasksSeq = 0
+let reportedTasksSeq = 0
+
 interface AgendaState {
   categories: TaskCategory[]
   tasks: Task[]
@@ -163,6 +166,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   },
 
   fetchUserTasks: async (userId) => {    set({ loading: true })
+    const seq = ++userTasksSeq
     const today = format(new Date(), 'yyyy-MM-dd')
     const { data, error } = await supabase
       .from('tasks')
@@ -170,17 +174,18 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       .eq('assigned_to', userId)
       .order('date')
       .order('time')
-    if (!error && data) {
+    if (!error && data && seq === userTasksSeq) {
       set({
         tasks: data,
         overdueTasks: data.filter((t) => t.date < today && t.status === 'pending' && !t.deleted_at),
       })
     }
-    set({ loading: false })
+    if (seq === userTasksSeq) set({ loading: false })
   },
 
   fetchReportedTasks: async ({ from, to, userId, status }) => {
     set({ loading: true })
+    const seq = ++reportedTasksSeq
     let query = supabase
       .from('tasks')
       .select('*, category:task_categories(*)')
@@ -191,8 +196,8 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     if (to) query = query.lte('date', to)
     if (status) query = query.eq('status', status)
     const { data, error } = await query
-    if (!error && data) set({ tasks: data })
-    set({ loading: false })
+    if (!error && data && seq === reportedTasksSeq) set({ tasks: data })
+    if (seq === reportedTasksSeq) set({ loading: false })
   },
 
   createTask: async (data) => {

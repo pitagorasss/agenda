@@ -30,7 +30,7 @@ export function Statistics() {
   }, [fetchUsers])
 
   useEffect(() => {
-    fetchReportedTasks({ userId: userId || undefined })
+    fetchReportedTasks({ userId: userId && userId !== 'all' ? userId : undefined })
   }, [fetchReportedTasks, userId])
 
   const applyFilters = () => {

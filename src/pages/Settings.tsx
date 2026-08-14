@@ -9,7 +9,8 @@ import {
   requestNotificationPermission,
 } from '@/lib/notifications'
 import { playNotificationSound } from '@/lib/notificationSound'
-import { Moon, Sun, User, Palette, LogOut, Bell, BellRing, BellOff } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { Moon, Sun, User, Palette, LogOut, Bell, BellRing, BellOff, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export function Settings() {
@@ -54,6 +55,15 @@ export function Settings() {
       playNotificationSound()
     }
     setNotice(shown ? null : 'Permita as notificações do navegador para testar.')
+  }, [])
+
+  const handleTestCompletionNotification = useCallback(async () => {
+    const { error } = await supabase.rpc('send_test_completion_notification')
+    if (error) {
+      setNotice(`Falha ao enviar: ${error.message}`)
+      return
+    }
+    setNotice('Notificação de conclusão enviada. Verifique o banner do navegador e o som.')
   }, [])
 
   return (
@@ -116,6 +126,17 @@ export function Settings() {
                 {notice}
               </p>
             )}
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Notificação de tarefa concluída</p>
+                <p className="text-xs text-muted-foreground">
+                  Simula a notificação que quem designou a tarefa recebe quando ela é concluída.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleTestCompletionNotification}>
+                <CheckCircle2 className="h-4 w-4" /> Testar
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </motion.div>

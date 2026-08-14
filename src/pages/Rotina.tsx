@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { PerformanceCard } from '@/components/agenda/PerformanceCard'
 import { CalendarClock, CheckCircle2, Circle, ChevronLeft, ChevronRight, LayoutGrid, Pencil, Plus, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -132,18 +131,6 @@ export function Rotina() {
     setDragTaskId(null)
   }
 
-  const performanceRoutine = useMemo(
-    () => ({
-      slots: mySlots,
-      completions: routineCompletions.filter((c) => c.user_id === activeUserId_),
-      from,
-      to,
-    }),
-    [mySlots, routineCompletions, activeUserId_, from, to],
-  )
-
-  const visibleTasks = tasks.filter((t) => !t.deleted_at && t.assigned_to === activeUserId_)
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -195,8 +182,6 @@ export function Rotina() {
           )
         })}
       </div>
-
-      <PerformanceCard tasks={visibleTasks} routine={performanceRoutine} />
 
       <Card>
         <CardHeader className="pb-3">

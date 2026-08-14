@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { format, parseISO } from 'date-fns'
+import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { useAgendaStore } from '@/stores/agendaStore'
-import { playNotificationSound, preloadNotificationSound } from '@/lib/notificationSound'
+import { playNotificationSound, preloadNotificationSound, playCompletionNotificationSound } from '@/lib/notificationSound'
 import { fireBrowserNotification } from '@/lib/notifications'
+import type { AppNotification } from '@/types'
 
 const CHANNEL_NAME = 'agenda-task-notifications'
 const SESSION_PREFIX = 'agenda:notified:'
@@ -147,6 +149,36 @@ gcClaims()
     if (!user) return
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission().catch(() => {})
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+
+    const channel = supabase
+      .channel('notifications-channel')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const n = payload.new as AppNotification
+          if (!n?.id) return
+          const actor = useAgendaStore.getState().users.find((u) => u.id === n.actor_id)
+          const actorName = actor?.name || 'Um usuário'
+          const body = `${actorName} concluiu a tarefa "${n.title}"`
+
+          fireBrowserNotification({
+            title: 'Tarefa concluída',
+            body,
+            tag: `agenda-notif-${n.id}`,
+            onShow: () => playCompletionNotificationSound(),
+          })
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
     }
   }, [user])
 

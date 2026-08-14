@@ -238,7 +238,7 @@ export function DayTasksModal({ date, onClose }: Props) {
 
             {showAddForm && (
               <Dialog open onOpenChange={(v) => { if (!v) setShowAddForm(false) }}>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="max-w-[522px]">
                   <DialogHeader>
                     <DialogTitle>Adicionar Tarefa</DialogTitle>
                   </DialogHeader>

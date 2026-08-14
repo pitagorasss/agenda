@@ -93,6 +93,8 @@ export function TaskForm({ date, editingId, onDone }: Props) {
     }
   }
 
+  const taskDateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
   const handleRoutineSelect = (date: string, time: string) => {
     const d = parseISO(date)
     setDay(d.getDate())
@@ -115,8 +117,6 @@ export function TaskForm({ date, editingId, onDone }: Props) {
       if (newId) categoryId = newId
     }
 
-    const taskDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-
     const taskData = {
       title,
       description: description || null,
@@ -124,7 +124,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
       category_id: categoryId,
       assigned_to: assignedTo || null,
       priority,
-      date: taskDate,
+      date: taskDateKey,
       created_by: user?.id,
     }
 
@@ -309,6 +309,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
       <RoutineSlotPicker
         open={routinePickerOpen}
         userId={assignedTo}
+        date={taskDateKey}
         onSelect={handleRoutineSelect}
         onSkip={() => setRoutinePickerOpen(false)}
         onClose={() => setRoutinePickerOpen(false)}
