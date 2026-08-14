@@ -1,20 +1,15 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useEffect } from 'react'
+import { useAgendaStore } from '@/stores/agendaStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users as UsersIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
-import type { Profile } from '@/types'
 
 export function Users() {
-  const [profiles, setProfiles] = useState<Profile[]>([])
+  const { users: profiles, fetchUsers } = useAgendaStore()
 
   useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.from('profiles').select('id, email, name, created_at').order('email')
-      if (data) setProfiles(data)
-    }
-    load()
-  }, [])
+    fetchUsers()
+  }, [fetchUsers])
 
   return (
     <motion.div

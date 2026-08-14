@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+import { TASK_SELECT } from '@/lib/constants'
+import { useAuthStore } from '@/stores/authStore'
 import type { TaskCategory, Task, Profile, EvolutionObservation, RoutineSlot, RoutineSlotCompletion } from '@/types'
 
 interface EvolutionFilters {
@@ -10,15 +12,21 @@ interface EvolutionFilters {
   level?: string
 }
 
+let tasksSeq = 0
 let userTasksSeq = 0
 let reportedTasksSeq = 0
+
+type TaskArrays = 'tasks' | 'userTasks' | 'weekTasks' | 'reportTasks'
 
 interface AgendaState {
   categories: TaskCategory[]
   tasks: Task[]
+  userTasks: Task[]
+  weekTasks: Task[]
+  reportTasks: Task[]
   overdueTasks: Task[]
   evolutions: EvolutionObservation[]
-  loading: boolean
+  loadingCount: number
   users: Profile[]
   routineSlots: RoutineSlot[]
   routineCompletions: RoutineSlotCompletion[]
@@ -27,7 +35,6 @@ interface AgendaState {
   createCategory: (data: Partial<TaskCategory>) => Promise<TaskCategory | null>
   updateCategory: (id: string, data: Partial<TaskCategory>) => Promise<void>
   deleteCategory: (id: string) => Promise<void>
-  fetchTasks: (date?: string) => Promise<void>
   fetchTasksByMonth: (year: number, month: number) => Promise<void>
   fetchTasksBetween: (from: string, to: string) => Promise<void>
   fetchUserTasks: (userId: string) => Promise<void>
@@ -54,13 +61,36 @@ interface AgendaState {
   toggleRoutineCompletion: (slotId: string, userId: string, date: string) => Promise<void>
 }
 
+const taskArrays: TaskArrays[] = ['tasks', 'userTasks', 'weekTasks', 'reportTasks']
+
+const updaterFor =
+  (id: string, updater: (t: Task) => Task) =>
+  (prev: AgendaState): Partial<AgendaState> => {
+    const next: Partial<AgendaState> = {}
+    for (const key of taskArrays) {
+      next[key] = prev[key].map((t) => (t.id === id ? updater(t) : t))
+    }
+    return next
+  }
+
+const removerFor = (id: string) => (prev: AgendaState): Partial<AgendaState> => {
+  const next: Partial<AgendaState> = {}
+  for (const key of taskArrays) {
+    next[key] = prev[key].filter((t) => t.id !== id)
+  }
+  return next
+}
+
 export const useAgendaStore = create<AgendaState>((set) => ({
   categories: [],
   tasks: [],
+  userTasks: [],
+  weekTasks: [],
+  reportTasks: [],
   overdueTasks: [],
   evolutions: [],
   users: [],
-  loading: false,
+  loadingCount: 0,
   routineSlots: [],
   routineCompletions: [],
 
@@ -119,76 +149,78 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       toast.error(error.message)
       return
     }
-    set((s) => ({
-      categories: s.categories.filter((c) => c.id !== id),
-      tasks: s.tasks.map((t) => (t.category_id === id ? { ...t, category_id: null } : t)),
-    }))
-  },
-
-  fetchTasks: async (date) => {
-    set({ loading: true })
-    let query = supabase.from('tasks').select('*, category:task_categories(*)').is('deleted_at', null).order('time')
-    if (date) query = query.eq('date', date)
-    const { data, error } = await query
-    if (!error && data) set({ tasks: data })
-    set({ loading: false })
+    set((s) => {
+      const next: Partial<AgendaState> = {}
+      for (const key of taskArrays) {
+        next[key] = s[key].map((t) => (t.category_id === id ? { ...t, category_id: null, category: null } : t))
+      }
+      return {
+        categories: s.categories.filter((c) => c.id !== id),
+        ...next,
+      }
+    })
   },
 
   fetchTasksByMonth: async (year, month) => {
-    set({ loading: true })
+    set((s) => ({ loadingCount: s.loadingCount + 1 }))
+    const seq = ++tasksSeq
     const start = `${year}-${String(month).padStart(2, '0')}-01`
     const lastDay = new Date(year, month, 0).getDate()
     const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
     const { data, error } = await supabase
       .from('tasks')
-      .select('*, category:task_categories(*)')
+      .select(TASK_SELECT)
       .gte('date', start)
       .lte('date', end)
       .is('deleted_at', null)
       .order('date')
       .order('time')
-    if (!error && data) set({ tasks: data })
-    set({ loading: false })
+    if (!error && data && seq === tasksSeq) set({ tasks: data })
+    set((s) => ({ loadingCount: s.loadingCount - 1 }))
   },
 
   fetchTasksBetween: async (from, to) => {
-    set({ loading: true })
+    set((s) => ({ loadingCount: s.loadingCount + 1 }))
+    const seq = ++tasksSeq
     const { data, error } = await supabase
       .from('tasks')
-      .select('*, category:task_categories(*)')
+      .select(TASK_SELECT)
       .gte('date', from)
       .lte('date', to)
       .is('deleted_at', null)
       .order('date')
       .order('time')
-    if (!error && data) set({ tasks: data })
-    set({ loading: false })
+    if (!error && data && seq === tasksSeq) set({ weekTasks: data })
+    set((s) => ({ loadingCount: s.loadingCount - 1 }))
   },
 
-  fetchUserTasks: async (userId) => {    set({ loading: true })
+  fetchUserTasks: async (userId) => {
+    set((s) => ({ loadingCount: s.loadingCount + 1 }))
     const seq = ++userTasksSeq
     const today = format(new Date(), 'yyyy-MM-dd')
     const { data, error } = await supabase
       .from('tasks')
-      .select('*, category:task_categories(*)')
+      .select(TASK_SELECT)
       .eq('assigned_to', userId)
+      .is('deleted_at', null)
       .order('date')
       .order('time')
     if (!error && data && seq === userTasksSeq) {
       set({
-        tasks: data,
-        overdueTasks: data.filter((t) => t.date < today && t.status === 'pending' && !t.deleted_at),
+        userTasks: data,
+        overdueTasks: data.filter((t) => t.date < today && t.status === 'pending'),
       })
     }
-    if (seq === userTasksSeq) set({ loading: false })
+    if (seq === userTasksSeq) set((s) => ({ loadingCount: s.loadingCount - 1 }))
   },
 
   fetchReportedTasks: async ({ from, to, userId, status }) => {
-    set({ loading: true })
+    set((s) => ({ loadingCount: s.loadingCount + 1 }))
     const seq = ++reportedTasksSeq
     let query = supabase
       .from('tasks')
-      .select('*, category:task_categories(*)')
+      .select(TASK_SELECT)
+      .is('deleted_at', null)
       .order('date')
       .order('time')
     if (userId) query = query.eq('assigned_to', userId)
@@ -196,15 +228,15 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     if (to) query = query.lte('date', to)
     if (status) query = query.eq('status', status)
     const { data, error } = await query
-    if (!error && data && seq === reportedTasksSeq) set({ tasks: data })
-    if (seq === reportedTasksSeq) set({ loading: false })
+    if (!error && data && seq === reportedTasksSeq) set({ reportTasks: data })
+    if (seq === reportedTasksSeq) set((s) => ({ loadingCount: s.loadingCount - 1 }))
   },
 
   createTask: async (data) => {
     const { data: result, error } = await supabase
       .from('tasks')
       .insert(data)
-      .select('*, category:task_categories(*)')
+      .select(TASK_SELECT)
       .single()
     if (error) {
       toast.error(error.message)
@@ -219,14 +251,14 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       .from('tasks')
       .update(data)
       .eq('id', id)
-      .select('*, category:task_categories(*)')
+      .select(TASK_SELECT)
       .single()
     if (error) {
       toast.error(error.message)
       return
     }
     set((s) => ({
-      tasks: s.tasks.map((t) => (t.id === id ? updated : t)),
+      ...updaterFor(id, () => updated)(s),
       overdueTasks: s.overdueTasks.map((t) => (t.id === id ? updated : t)),
     }))
   },
@@ -238,32 +270,34 @@ export const useAgendaStore = create<AgendaState>((set) => ({
       return
     }
     set((s) => ({
-      tasks: s.tasks.filter((t) => t.id !== id),
+      ...removerFor(id)(s),
       overdueTasks: s.overdueTasks.filter((t) => t.id !== id),
     }))
   },
 
   markTaskCompleted: async (id, observation) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase
+    const userId = useAuthStore.getState().user?.id
+    const { data: updated, error } = await supabase
       .from('tasks')
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
-        completed_by: user?.id ?? null,
+        completed_by: userId ?? null,
         observation: observation || null,
         forecast_date: null,
         forecast_time: null,
         forecast_observation: null,
-        deleted_at: new Date().toISOString(),
       })
       .eq('id', id)
+      .select(TASK_SELECT)
+      .single()
     if (error) {
       toast.error(error.message)
       return false
     }
+    if (!updated) return false
     set((s) => ({
-      tasks: s.tasks.filter((t) => t.id !== id),
+      ...updaterFor(id, () => updated)(s),
       overdueTasks: s.overdueTasks.filter((t) => t.id !== id),
     }))
     return true
@@ -282,33 +316,23 @@ export const useAgendaStore = create<AgendaState>((set) => ({
         forecast_observation: null,
       })
       .eq('id', id)
-      .select('*, category:task_categories(*)')
+      .select(TASK_SELECT)
       .single()
     if (error) {
       toast.error(error.message)
       return false
     }
+    if (!updated) return false
     const today = format(new Date(), 'yyyy-MM-dd')
+    const isPast = updated.date < today
     set((s) => {
-      const updatedTask = updated ?? {
-        ...s.tasks.find((t) => t.id === id),
-        status: 'pending' as const,
-        completed_at: null,
-        completed_by: null,
-        observation: observation || null,
-        forecast_date: null,
-        forecast_time: null,
-        forecast_observation: null,
-      }
-      if (!updatedTask) return s
-      const isPast = updatedTask.date < today
+      const inOverdue = s.overdueTasks.some((t) => t.id === id)
       return {
-        tasks: s.tasks.map((t) => (t.id === id ? updatedTask : t)),
+        ...updaterFor(id, () => updated)(s),
         overdueTasks: isPast
-          ? (() => {
-              const exists = s.overdueTasks.some((t) => t.id === id)
-              return exists ? s.overdueTasks.map((t) => (t.id === id ? updatedTask : t)) : [...s.overdueTasks, updatedTask]
-            })()
+          ? inOverdue
+            ? s.overdueTasks.map((t) => (t.id === id ? updated : t))
+            : [...s.overdueTasks, updated]
           : s.overdueTasks.filter((t) => t.id !== id),
       }
     })
@@ -327,39 +351,36 @@ export const useAgendaStore = create<AgendaState>((set) => ({
         completed_by: null,
       })
       .eq('id', id)
-      .select('*, category:task_categories(*)')
+      .select(TASK_SELECT)
       .single()
     if (error) {
       toast.error(error.message)
       return false
     }
-    set((s) => {
-      const updatedTask = updated ?? { ...s.tasks.find((t) => t.id === id), status: 'forecast' as const }
-      if (!updatedTask) return s
-      return {
-        tasks: s.tasks.map((t) => (t.id === id ? updatedTask : t)),
-        overdueTasks: s.overdueTasks.map((t) => (t.id === id ? updatedTask : t)),
-      }
-    })
+    if (!updated) return false
+    set((s) => ({
+      ...updaterFor(id, () => updated)(s),
+      overdueTasks: s.overdueTasks.map((t) => (t.id === id ? updated : t)),
+    }))
     return true
   },
 
   fetchEvolutions: async ({ responsibleId, type, level } = {}) => {
-    set({ loading: true })
+    set((s) => ({ loadingCount: s.loadingCount + 1 }))
     let query = supabase.from('evolution_observations').select('*').order('created_at', { ascending: false })
     if (responsibleId) query = query.eq('responsible_id', responsibleId)
     if (type) query = query.eq('type', type)
     if (level) query = query.eq('level', level)
     const { data, error } = await query
     if (!error && data) set({ evolutions: data })
-    set({ loading: false })
+    set((s) => ({ loadingCount: s.loadingCount - 1 }))
   },
 
   createEvolution: async (data) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const userId = useAuthStore.getState().user?.id
     const { data: result, error } = await supabase
       .from('evolution_observations')
-      .insert({ ...data, created_by: user?.id })
+      .insert({ ...data, created_by: userId })
       .select()
       .single()
     if (error) {
@@ -405,10 +426,10 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   },
 
   createRoutineSlot: async (data) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const userId = useAuthStore.getState().user?.id
     const { data: result, error } = await supabase
       .from('routine_slots')
-      .insert({ ...data, created_by: user?.id ?? data.created_by })
+      .insert({ ...data, created_by: userId ?? data.created_by })
       .select()
       .single()
     if (error) {
@@ -450,7 +471,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   },
 
   toggleRoutineCompletion: async (slotId, userId, date) => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const currentUserId = useAuthStore.getState().user?.id
     const existing = await supabase
       .from('routine_slot_completions')
       .select('id')
@@ -468,7 +489,7 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     }
     const { data: created, error } = await supabase
       .from('routine_slot_completions')
-      .insert({ slot_id: slotId, user_id: userId, date, created_by: user?.id ?? null })
+      .insert({ slot_id: slotId, user_id: userId, date, created_by: currentUserId ?? null })
       .select()
       .single()
     if (error) {

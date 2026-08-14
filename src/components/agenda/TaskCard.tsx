@@ -5,19 +5,23 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { PriorityBadge } from '@/components/agenda/PriorityBadge'
 import { Textarea } from '@/components/ui/textarea'
-import { CheckCircle2, MessageSquarePlus, CalendarClock } from 'lucide-react'
+import { CheckCircle2, MessageSquarePlus, CalendarClock, Pencil, Trash2, User } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { ForecastDialog } from '@/components/agenda/ForecastDialog'
+import { getUserName } from '@/lib/taskUtils'
 
 interface Props {
   task: Task
   showDate?: boolean
+  showResponsible?: boolean
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
 const OBS_MAX = 500
 
-export function TaskCard({ task, showDate }: Props) {
-  const { markTaskCompleted, updateTask } = useAgendaStore()
+export function TaskCard({ task, showDate, showResponsible, onEdit, onDelete }: Props) {
+  const { markTaskCompleted, updateTask, users } = useAgendaStore()
   const user = useAuthStore((s) => s.user)
   const [editingObs, setEditingObs] = useState(false)
   const [obsText, setObsText] = useState(task.observation ?? '')
@@ -84,6 +88,11 @@ export function TaskCard({ task, showDate }: Props) {
             </span>
           )}
         </div>
+        {showResponsible && task.assigned_to && (
+          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+            <User className="h-3 w-3" /> {getUserName(task.assigned_to, users)}
+          </p>
+        )}
         {task.description && (
           <p className={`text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap ${completed ? 'line-through' : ''}`}>
             {task.description}
@@ -153,6 +162,18 @@ export function TaskCard({ task, showDate }: Props) {
                 <CalendarClock className="h-3.5 w-3.5" />
                 {forecast ? 'Editar previsão' : 'Previsão de conclusão'}
               </Button>
+              {onEdit && (
+                <Button size="sm" variant="outline" onClick={onEdit}>
+                  <Pencil className="h-3.5 w-3.5" />
+                  Editar
+                </Button>
+              )}
+              {onDelete && (
+                <Button size="sm" variant="outline" onClick={onDelete}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Excluir
+                </Button>
+              )}
             </div>
           )
         )}

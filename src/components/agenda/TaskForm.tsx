@@ -7,11 +7,10 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RoutineSlotPicker } from '@/components/agenda/RoutineSlotPicker'
+import { COLOR_PALETTE } from '@/lib/constants'
 import { parseISO } from 'date-fns'
 
 const DESCRIPTION_MAX = 250
-
-const colorPalette = ['#DC2626', '#2563EB', '#16A34A', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#6B7280', '#EF4444']
 
 const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
@@ -268,7 +267,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
           <div className="space-y-1">
             <Label>Cor</Label>
             <div className="flex flex-wrap gap-2">
-              {colorPalette.map((color) => (
+              {COLOR_PALETTE.map((color) => (
                 <button
                   key={color}
                   type="button"
@@ -286,7 +285,7 @@ export function TaskForm({ date, editingId, onDone }: Props) {
         <div className="space-y-1 rounded-lg border bg-muted/30 p-3">
           <Label>Cor da categoria (editar)</Label>
           <div className="flex flex-wrap gap-2">
-            {colorPalette.map((color) => (
+            {COLOR_PALETTE.map((color) => (
               <button
                 key={color}
                 type="button"

@@ -9,9 +9,11 @@ import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { FileBarChart } from 'lucide-react'
 import { PriorityBadge } from '@/components/agenda/PriorityBadge'
+import { getUserName, formatDate } from '@/lib/taskUtils'
 
 export function Reports() {
-  const { tasks, fetchReportedTasks, fetchUsers, users, loading } = useAgendaStore()
+  const { reportTasks: tasks, fetchReportedTasks, fetchUsers, users, loadingCount } = useAgendaStore()
+  const loading = loadingCount > 0
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [status, setStatus] = useState('')
@@ -40,13 +42,6 @@ export function Reports() {
     setStatus('')
     setUserId('')
     fetchReportedTasks({})
-  }
-
-  const getUserName = (id: string) => users.find((u) => u.id === id)?.name ?? users.find((u) => u.id === id)?.email ?? '—'
-
-  const formatDate = (d: string) => {
-    const [y, m, day] = d.split('-')
-    return `${day}/${m}/${y}`
   }
 
   return (
@@ -158,7 +153,7 @@ export function Reports() {
                     <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-muted-foreground">
                       <span>Data: {formatDate(task.date)}</span>
                       {task.time && <span>Hora: {task.time.slice(0, 5)}</span>}
-                      {task.assigned_to && <span>Responsável: {getUserName(task.assigned_to)}</span>}
+                      {task.assigned_to && <span>Responsável: {getUserName(task.assigned_to, users)}</span>}
                       {completed && task.completed_at && (
                         <span>Concluída em: {format(new Date(task.completed_at), 'dd/MM/yyyy HH:mm')}</span>
                       )}

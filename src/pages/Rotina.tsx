@@ -12,21 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CalendarClock, CheckCircle2, Circle, ChevronLeft, ChevronRight, LayoutGrid, Pencil, Plus, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { WEEKDAYS } from '@/lib/constants'
+import { toMin, fmtTime } from '@/lib/taskUtils'
 import type { RoutineSlot, Task } from '@/types'
 
-const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const SLOT_COLORS = ['#2563EB', '#16A34A', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316']
-
-function toMin(t: string | null | undefined): number | null {
-  if (!t) return null
-  const parts = t.split(':').map(Number)
-  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null
-  return parts[0] * 60 + parts[1]
-}
-
-function fmtTime(t: string) {
-  return t.slice(0, 5)
-}
 
 function getSlotColor(index: number) {
   return SLOT_COLORS[index % SLOT_COLORS.length]
@@ -34,7 +24,7 @@ function getSlotColor(index: number) {
 
 export function Rotina() {
   const {
-    tasks,
+    weekTasks: tasks,
     users,
     routineSlots,
     routineCompletions,

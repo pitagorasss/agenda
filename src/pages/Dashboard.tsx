@@ -20,7 +20,8 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 ]
 
 export function Dashboard() {
-  const { tasks, overdueTasks, fetchUserTasks, fetchUsers, users, loading } = useAgendaStore()
+  const { userTasks: tasks, overdueTasks, fetchUserTasks, fetchUsers, users, loadingCount } = useAgendaStore()
+  const loading = loadingCount > 0
   const user = useAuthStore((s) => s.user)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -40,7 +41,6 @@ export function Dashboard() {
   const overdueIds = new Set(overdueTasks.map((t) => t.id))
   const showOverdue = statusFilter === 'all' || statusFilter === 'pending'
   const filteredTasks = tasks
-    .filter((t) => !t.deleted_at)
     .filter((t) => (statusFilter === 'all' ? true : t.status === statusFilter))
     .filter((t) => (statusFilter === 'all' || statusFilter === 'pending' ? t.date >= todayKey : true))
     .filter((t) => !showOverdue || !overdueIds.has(t.id))

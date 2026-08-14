@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { motion } from 'framer-motion'
 import { Plus, Pencil, Trash2, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getUserName, formatDateTime } from '@/lib/taskUtils'
 
 const DESCRIPTION_MAX = 500
 
@@ -25,8 +26,9 @@ const levelConfig: Record<string, { label: string; className: string }> = {
 }
 
 export function Evolution() {
-  const { evolutions, fetchEvolutions, createEvolution, updateEvolution, deleteEvolution, fetchUsers, users, loading } =
+  const { evolutions, fetchEvolutions, createEvolution, updateEvolution, deleteEvolution, fetchUsers, users, loadingCount } =
     useAgendaStore()
+  const loading = loadingCount > 0
   const user = useAuthStore((s) => s.user)
 
   const [showForm, setShowForm] = useState(false)
@@ -47,13 +49,6 @@ export function Evolution() {
   useEffect(() => {
     fetchEvolutions()
   }, [fetchEvolutions])
-
-  const getUserName = (id: string) => users.find((u) => u.id === id)?.name ?? users.find((u) => u.id === id)?.email ?? '—'
-  const formatDate = (d: string) => {
-    const date = new Date(d)
-    if (Number.isNaN(date.getTime())) return '—'
-    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
-  }
 
   const canModify = (item: { id: string; created_by: string }) =>
     item.created_by === user?.id
@@ -299,13 +294,13 @@ export function Evolution() {
                     <span className="text-sm font-medium">{item.description}</span>
                   </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-muted-foreground">
-                    <span>Registrado em: {formatDate(item.created_at)}</span>
+                    <span>Registrado em: {formatDateTime(item.created_at)}</span>
                     {item.responsible_id && (
                       <span className="flex items-center gap-1">
-                        <User className="h-3 w-3" /> Responsável: {getUserName(item.responsible_id)}
+                        <User className="h-3 w-3" /> Responsável: {getUserName(item.responsible_id, users)}
                       </span>
                     )}
-                    <span>Autor: {getUserName(item.created_by)}</span>
+                    <span>Autor: {getUserName(item.created_by, users)}</span>
                   </div>
                   {canModify(item) && (
                     <div className="flex gap-1 mt-1.5">

@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { useAgendaStore } from '@/stores/agendaStore'
 import { playNotificationSound, preloadNotificationSound, playCompletionNotificationSound } from '@/lib/notificationSound'
 import { fireBrowserNotification } from '@/lib/notifications'
-import type { AppNotification } from '@/types'
+import { TASK_SELECT } from '@/lib/constants'
+import type { AppNotification, Task } from '@/types'
 
 const CHANNEL_NAME = 'agenda-task-notifications'
 const SESSION_PREFIX = 'agenda:notified:'
@@ -76,9 +77,7 @@ function gcClaims() {
 
 export function useTaskNotifications() {
   const user = useAuthStore((s) => s.user)
-  const tasks = useAgendaStore((s) => s.tasks)
-  const overdueTasks = useAgendaStore((s) => s.overdueTasks)
-  const fetchUserTasks = useAgendaStore((s) => s.fetchUserTasks)
+  const [todayTasks, setTodayTasks] = useState<Task[]>([])
 
   const remindersRef = useRef<Reminder[]>([])
   const channelRef = useRef<BroadcastChannel | null>(null)
@@ -111,13 +110,26 @@ export function useTaskNotifications() {
     remindersRef.current = []
   }, [])
 
+  const fetchToday = useCallback(async () => {
+    if (!user) return
+    const today = format(new Date(), 'yyyy-MM-dd')
+    const { data, error } = await supabase
+      .from('tasks')
+      .select(TASK_SELECT)
+      .eq('assigned_to', user.id)
+      .eq('date', today)
+      .is('deleted_at', null)
+      .neq('status', 'completed')
+    if (!error && data) setTodayTasks(data)
+  }, [user])
+
   useEffect(() => {
     if (!user) {
       clearReminders()
       return
     }
 
-gcClaims()
+    gcClaims()
 
     preloadNotificationSound()
 
@@ -142,15 +154,17 @@ gcClaims()
 
   useEffect(() => {
     if (!user) return
-    fetchUserTasks(user.id)
-  }, [user, fetchUserTasks])
-
-  useEffect(() => {
-    if (!user) return
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission().catch(() => {})
     }
   }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    fetchToday()
+    const interval = setInterval(fetchToday, 60_000)
+    return () => clearInterval(interval)
+  }, [user, fetchToday])
 
   useEffect(() => {
     if (!user) return
@@ -186,16 +200,13 @@ gcClaims()
     if (!user) return
     loadNotified()
 
-    const eligible = [...tasks, ...overdueTasks].filter(
-      (t) => t.assigned_to === user.id && t.time && t.status !== 'completed',
-    )
-
     const todayKey = format(new Date(), 'yyyy-MM-dd')
     const now = new Date()
 
     clearReminders()
 
-    for (const task of eligible) {
+    for (const task of todayTasks) {
+      if (!task.time) continue
       if (task.date !== todayKey) continue
 
       let reminderAt: Date | null = null
@@ -210,11 +221,6 @@ gcClaims()
       if (diff < 0) continue
 
       const timeout = setTimeout(async () => {
-        const stillPending = useAgendaStore
-          .getState()
-          .tasks.some((t) => t.id === task.id && t.status !== 'completed')
-        if (!stillPending) return
-
         const sessionKey = `${SESSION_PREFIX}${task.id}:${todayKey}`
         if (notifiedTasksRef.current.has(sessionKey)) return
 
@@ -237,7 +243,7 @@ gcClaims()
     }
 
     return () => clearReminders()
-  }, [tasks, overdueTasks, user, fetchUserTasks, clearReminders, markNotified, loadNotified])
+  }, [todayTasks, user, clearReminders, markNotified, loadNotified])
 
   return null
 }

@@ -18,7 +18,8 @@ function pct(n: number, d: number) {
 }
 
 export function Statistics() {
-  const { tasks, fetchReportedTasks, fetchUsers, users, loading } = useAgendaStore()
+  const { reportTasks: tasks, fetchReportedTasks, fetchUsers, users, loadingCount } = useAgendaStore()
+  const loading = loadingCount > 0
   const user = useAuthStore((s) => s.user)
 
   const [from, setFrom] = useState('')

@@ -4,16 +4,16 @@ import { useAuthStore } from '@/stores/authStore'
 import { useAuth } from '@/hooks/useAuth'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Login } from '@/pages/Login'
-import { Dashboard } from '@/pages/Dashboard'
-import { Agenda } from '@/pages/Agenda'
-import { Users } from '@/pages/Users'
-import { Reports } from '@/pages/Reports'
-import { Evolution } from '@/pages/Evolution'
-import { Settings } from '@/pages/Settings'
-import { Rotina } from '@/pages/Rotina'
 import { useTaskNotifications } from '@/hooks/useTaskNotifications'
 import { AnimatePresence, motion } from 'framer-motion'
 
+const Dashboard = lazy(() => import('@/pages/Dashboard').then((m) => ({ default: m.Dashboard })))
+const Agenda = lazy(() => import('@/pages/Agenda').then((m) => ({ default: m.Agenda })))
+const Users = lazy(() => import('@/pages/Users').then((m) => ({ default: m.Users })))
+const Reports = lazy(() => import('@/pages/Reports').then((m) => ({ default: m.Reports })))
+const Evolution = lazy(() => import('@/pages/Evolution').then((m) => ({ default: m.Evolution })))
+const Settings = lazy(() => import('@/pages/Settings').then((m) => ({ default: m.Settings })))
+const Rotina = lazy(() => import('@/pages/Rotina').then((m) => ({ default: m.Rotina })))
 const Statistics = lazy(() => import('@/pages/Statistics').then((m) => ({ default: m.Statistics })))
 
 function Loader() {
@@ -45,16 +45,17 @@ function AnimatedOutlet() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.2 }}
+        className="h-full"
       >
         <Routes location={location}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/agenda" element={<Agenda />} />
-          <Route path="/rotina" element={<Rotina />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route path="/dashboard" element={<Suspense fallback={<Loader />}><Dashboard /></Suspense>} />
+          <Route path="/agenda" element={<Suspense fallback={<Loader />}><Agenda /></Suspense>} />
+          <Route path="/rotina" element={<Suspense fallback={<Loader />}><Rotina /></Suspense>} />
+          <Route path="/users" element={<Suspense fallback={<Loader />}><Users /></Suspense>} />
+          <Route path="/reports" element={<Suspense fallback={<Loader />}><Reports /></Suspense>} />
           <Route path="/statistics" element={<Suspense fallback={<Loader />}><Statistics /></Suspense>} />
-          <Route path="/evolution" element={<Evolution />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/evolution" element={<Suspense fallback={<Loader />}><Evolution /></Suspense>} />
+          <Route path="/settings" element={<Suspense fallback={<Loader />}><Settings /></Suspense>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </motion.div>

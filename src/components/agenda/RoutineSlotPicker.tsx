@@ -7,19 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { CalendarClock, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-
-function toMin(t: string | null | undefined): number | null {
-  if (!t) return null
-  const parts = t.split(':').map(Number)
-  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null
-  return parts[0] * 60 + parts[1]
-}
-
-function fmtTime(t: string) {
-  return t.slice(0, 5)
-}
+import { WEEKDAYS } from '@/lib/constants'
+import { toMin, fmtTime } from '@/lib/taskUtils'
 
 interface Props {
   open: boolean
