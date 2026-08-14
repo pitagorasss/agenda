@@ -128,7 +128,7 @@ export function TaskCard({ task, showDate, showResponsible, onEdit, onDelete }: 
               autoFocus
               maxLength={OBS_MAX}
             />
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button size="sm" variant="outline" onClick={() => { setEditingObs(false); setObsText(task.observation ?? '') }}>
                 Cancelar
               </Button>
@@ -144,7 +144,7 @@ export function TaskCard({ task, showDate, showResponsible, onEdit, onDelete }: 
           </div>
         ) : (
           canModify && (
-            <div className="flex gap-1.5 mt-2">
+            <div className="flex gap-1.5 mt-2 flex-wrap">
               {canComplete && (
                 <Button size="sm" variant="outline" onClick={handleComplete}>
                   <CheckCircle2 className="h-3.5 w-3.5" /> Concluir

@@ -37,7 +37,7 @@ export function DayTasksModal({ date, onClose }: Props) {
             <DialogTitle>{format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto overflow-x-hidden pr-1">
             <AnimatePresence mode="popLayout">
               {dayTasks.length === 0 && !showAddForm && (
                 <motion.p
