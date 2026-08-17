@@ -4,17 +4,17 @@
 // - "Nova Categoria" abre um dialog de formulário (criar/editar) com nome e cor.
 
 import { useState } from 'react'
-import { useAgendaStore } from '@/stores/agendaStore'
+import { useAgendaStore } from '@/stores/agendaStore' // Ações de categorias: createCategory, updateCategory, deleteCategory.
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, Tags } from 'lucide-react'
-import { COLOR_PALETTE } from '@/lib/constants'
+import { COLOR_PALETTE } from '@/lib/constants' // Paleta de cores das categorias.
 import { motion, AnimatePresence } from 'framer-motion'
 
 export function CategoryManager() {
-  // Dados e ações de categorias vindas do store global
+  // Dados e ações de categorias vindas do useAgendaStore.
   const { categories, createCategory, updateCategory, deleteCategory } = useAgendaStore()
   // Estado da lista recolhida/expandida dentro do popup
   const [collapsed, setCollapsed] = useState(false)
@@ -22,7 +22,7 @@ export function CategoryManager() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState('')
-  const [color, setColor] = useState('#16A34A')
+  const [color, setColor] = useState('#16A34A') // Cor padrão da nova categoria (verde).
 
   // Limpa o formulário (usado ao fechar ou após salvar)
   const resetForm = () => {
@@ -134,7 +134,7 @@ export function CategoryManager() {
             </div>
             <div className="space-y-2">
               <Label>Cor</Label>
-              {/* Seletor de cor (bolinhas) usando a paleta global */}
+              {/* Seletor de cor (bolinhas) usando a constante COLOR_PALETTE. */}
               <div className="flex flex-wrap gap-2">
                 {COLOR_PALETTE.map((c) => (
                   <button

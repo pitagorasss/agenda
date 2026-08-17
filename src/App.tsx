@@ -1,3 +1,5 @@
+// Ponto de entrada do aplicativo: define o roteamento, proteção de rotas,
+// carregamento preguiçoso das páginas e animações de transição.
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { useAuthStore } from '@/stores/authStore'
@@ -7,6 +9,7 @@ import { Login } from '@/pages/Login'
 import { useTaskNotifications } from '@/hooks/useTaskNotifications'
 import { AnimatePresence, motion } from 'framer-motion'
 
+// Carregamento preguiçoso das páginas (só baixa o JS quando a rota for acessada).
 const Dashboard = lazy(() => import('@/pages/Dashboard').then((m) => ({ default: m.Dashboard })))
 const Agenda = lazy(() => import('@/pages/Agenda').then((m) => ({ default: m.Agenda })))
 const Users = lazy(() => import('@/pages/Users').then((m) => ({ default: m.Users })))
@@ -16,6 +19,7 @@ const Settings = lazy(() => import('@/pages/Settings').then((m) => ({ default: m
 const Rotina = lazy(() => import('@/pages/Rotina').then((m) => ({ default: m.Rotina })))
 const Statistics = lazy(() => import('@/pages/Statistics').then((m) => ({ default: m.Statistics })))
 
+// Spinner exibido enquanto a página preguiçosa carrega.
 function Loader() {
   return (
     <div className="flex h-40 items-center justify-center">
@@ -28,6 +32,8 @@ function Loader() {
   )
 }
 
+// Rota protegida: redireciona para o login se não houver usuário logado,
+// e ativa o agendamento de notificações de tarefas.
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
   useTaskNotifications()
@@ -35,6 +41,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+// Transição animada: envolve as rotas do dashboard em AnimatePresence,
+// animando a troca de página conforme a URL muda.
 function AnimatedOutlet() {
   const location = useLocation()
   return (
@@ -47,6 +55,7 @@ function AnimatedOutlet() {
         transition={{ duration: 0.2 }}
         className="h-full"
       >
+        {/* Rotas internas do dashboard (cada uma com suspense + loader). */}
         <Routes location={location}>
           <Route path="/dashboard" element={<Suspense fallback={<Loader />}><Dashboard /></Suspense>} />
           <Route path="/agenda" element={<Suspense fallback={<Loader />}><Agenda /></Suspense>} />
@@ -63,10 +72,12 @@ function AnimatedOutlet() {
   )
 }
 
+// Define as rotas principais, aguardando a restauração da sessão.
 function AppRoutes() {
   const { loading } = useAuth()
   const user = useAuthStore((s) => s.user)
 
+  // Tela de carregamento enquanto verifica a sessão.
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -81,7 +92,9 @@ function AppRoutes() {
 
   return (
     <Routes>
+      {/* Login: redireciona para o dashboard se já estiver logado. */}
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+      {/* Rotas protegidas envolvidas pelo layout do dashboard. */}
       <Route
         element={
           <ProtectedRoute>
@@ -91,11 +104,13 @@ function AppRoutes() {
       >
         <Route path="/*" element={<AnimatedOutlet />} />
       </Route>
+      {/* Qualquer outra rota vai para o dashboard. */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }
 
+// Componente raiz do app.
 export default function App() {
   return (
     <BrowserRouter>

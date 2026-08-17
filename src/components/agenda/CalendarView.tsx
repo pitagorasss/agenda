@@ -1,5 +1,5 @@
 // Componente de calendário mensal compartilhado.
-// - Exibe um mês inteiro com navegação por setas e botão "Hoje".
+// - Exibe um mês inteiro com navegação por setas e título do mês.
 // - Cada dia mostra até 3 tarefas (mini-cards) e abre o DayTasksModal ao clicar.
 // - Layout fixo: preenche toda a altura disponível sem rolar a página.
 
@@ -19,7 +19,8 @@ export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
-  // Sempre que o mês exibido muda, busca as tarefas daquele mês
+  // Sempre que o mês exibido muda, busca as tarefas daquele mês.
+  // getMonth() retorna 0-11; o store espera o mês 1-12 (por isso o +1).
   useEffect(() => {
     fetchTasksByMonth(currentDate.getFullYear(), currentDate.getMonth() + 1)
   }, [currentDate, fetchTasksByMonth])
@@ -47,7 +48,7 @@ export function CalendarView() {
   return (
     // Contêiner flex que ocupa toda a altura e não transborda (fixo, sem scroll)
     <div className="flex h-full min-h-0 flex-col gap-4">
-      {/* Barra de ferramentas: navegação entre meses e botão "Hoje" */}
+      {/* Barra de ferramentas: navegação entre meses */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => setCurrentDate(subMonths(currentDate, 1))}>

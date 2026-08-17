@@ -1,3 +1,5 @@
+// Página de Estatística: indicadores (KPIs), performance e gráfico de tendência
+// de conclusão de tarefas, com filtros por período e usuário.
 import { useEffect, useState } from 'react'
 import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -6,34 +8,39 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { motion } from 'framer-motion'
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts'
-import { PieChart as PieChartIcon, TrendingUp, CheckCircle2, Clock, Target } from 'lucide-react'
-import { PerformanceCard } from '@/components/agenda/PerformanceCard'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { motion } from 'framer-motion' // Animação.
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts' // Gráficos.
+import { PieChart as PieChartIcon, TrendingUp, CheckCircle2, Clock, Target } from 'lucide-react' // Ícones.
+import { PerformanceCard } from '@/components/agenda/PerformanceCard' // Cartão de performance.
+import { format } from 'date-fns' // Formatação de datas.
+import { ptBR } from 'date-fns/locale' // Locale em português.
 
+// Calcula o percentual n/d (0 se d for zero).
 function pct(n: number, d: number) {
   return d === 0 ? 0 : Math.round((n / d) * 100)
 }
 
 export function Statistics() {
   const { reportTasks: tasks, fetchReportedTasks, fetchUsers, users, loadingCount } = useAgendaStore()
-  const loading = loadingCount > 0
-  const user = useAuthStore((s) => s.user)
+  const loading = loadingCount > 0 // Indicador de carregamento.
+  const user = useAuthStore((s) => s.user) // Usuário logado.
 
+  // Estados dos filtros.
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
-  const [userId, setUserId] = useState(user?.id ?? '')
+  const [userId, setUserId] = useState(user?.id ?? '') // Padrão: o usuário logado.
 
+  // Carrega os usuários (para o filtro).
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
 
+  // Busca as tarefas quando o usuário filtrado muda (busca por padrão sem período).
   useEffect(() => {
     fetchReportedTasks({ userId: userId && userId !== 'all' ? userId : undefined })
   }, [fetchReportedTasks, userId])
 
+  // Aplica os filtros informados.
   const applyFilters = () => {
     fetchReportedTasks({
       from: from || undefined,
@@ -42,6 +49,7 @@ export function Statistics() {
     })
   }
 
+  // Limpa os filtros e volta ao usuário logado.
   const resetFilters = () => {
     setFrom('')
     setTo('')
@@ -49,19 +57,22 @@ export function Statistics() {
     fetchReportedTasks({ userId: user?.id ?? undefined })
   }
 
+  // Separa as tarefas por status para os KPIs.
   const completed = tasks.filter((t) => t.status === 'completed')
   const pending = tasks.filter((t) => t.status === 'pending')
   const forecast = tasks.filter((t) => t.status === 'forecast')
   const total = tasks.length
-  const completionRate = pct(completed.length, total)
+  const completionRate = pct(completed.length, total) // Taxa de conclusão.
 
+  // Monta os dados do gráfico de tendência (agrupados por dia ou por mês).
   const trendData = (() => {
     const map = new Map<string, { date: string; label: string; concluidas: number; total: number }>()
-    const sorted = [...tasks].sort((a, b) => (a.date < b.date ? -1 : 1))
+    const sorted = [...tasks].sort((a, b) => (a.date < b.date ? -1 : 1)) // Ordena por data.
 
+    // Agrupa por mês se houver mais de 90 tarefas ou um período maior que 60 dias.
     const useMonth = sorted.length > 90 || (from && to && diffDays(from, to) > 60)
     for (const t of sorted) {
-      const key = useMonth ? t.date.slice(0, 7) : t.date
+      const key = useMonth ? t.date.slice(0, 7) : t.date // Chave: mês ou dia.
       if (!map.has(key)) {
         const d = new Date(t.date)
         map.set(key, {
@@ -72,12 +83,13 @@ export function Statistics() {
         })
       }
       const item = map.get(key)!
-      item.total++
-      if (t.status === 'completed') item.concluidas++
+      item.total++ // Conta o total.
+      if (t.status === 'completed') item.concluidas++ // Conta as concluídas.
     }
     return Array.from(map.values())
   })()
 
+  // Indicadores (KPIs) exibidos no topo.
   const kpis = [
     { label: 'Total no período', value: total, icon: Target, color: 'text-brand-blue' },
     { label: 'Concluídas', value: completed.length, icon: CheckCircle2, color: 'text-brand-green' },
@@ -102,6 +114,7 @@ export function Statistics() {
         <p className="text-muted-foreground">Acompanhamento da conclusão de tarefas</p>
       </div>
 
+      {/* Painel de filtros. */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -141,6 +154,7 @@ export function Statistics() {
         </CardContent>
       </Card>
 
+      {/* Grade de KPIs. */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {kpis.map((kpi, idx) => (
           <motion.div
@@ -162,8 +176,10 @@ export function Statistics() {
         ))}
       </div>
 
+      {/* Cartão de performance. */}
       <PerformanceCard tasks={tasks} />
 
+      {/* Gráfico de linha da tendência de conclusão. */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Tendência de conclusão</CardTitle>
@@ -182,6 +198,7 @@ export function Statistics() {
                   <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend />
+                  {/* Linha de total e linha de concluídas. */}
                   <Line type="monotone" dataKey="total" name="Total" stroke="#2563EB" strokeWidth={2} dot={false} />
                   <Line type="monotone" dataKey="concluidas" name="Concluídas" stroke="#16A34A" strokeWidth={2} dot={false} />
                 </LineChart>
@@ -194,6 +211,7 @@ export function Statistics() {
   )
 }
 
+// Calcula a diferença em dias entre duas datas "YYYY-MM-DD".
 function diffDays(a: string, b: string) {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000)
 }

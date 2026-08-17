@@ -1,32 +1,39 @@
-﻿import { useEffect, useState } from 'react'
-import { useAgendaStore } from '@/stores/agendaStore'
+﻿// Página de Relatórios: lista as atividades (tarefas) com filtros por período,
+// status e usuário, exibindo status, prioridade e observações.
+import { useEffect, useState } from 'react'
+import { useAgendaStore } from '@/stores/agendaStore' // Store com fetchReportedTasks, fetchUsers, reportTasks, etc.
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { motion } from 'framer-motion'
-import { format } from 'date-fns'
-import { FileBarChart } from 'lucide-react'
-import { PriorityBadge } from '@/components/agenda/PriorityBadge'
-import { getUserName, formatDate } from '@/lib/taskUtils'
+import { motion } from 'framer-motion' // Animação.
+import { format } from 'date-fns' // Formatação de datas.
+import { FileBarChart } from 'lucide-react' // Ícone.
+import { PriorityBadge } from '@/components/agenda/PriorityBadge' // Selo de prioridade.
+import { getUserName, formatDate } from '@/lib/taskUtils' // Nome do responsável e data formatada.
 
 export function Reports() {
   const { reportTasks: tasks, fetchReportedTasks, fetchUsers, users, loadingCount } = useAgendaStore()
-  const loading = loadingCount > 0
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
-  const [status, setStatus] = useState('')
-  const [userId, setUserId] = useState('')
+  const loading = loadingCount > 0 // Indicador de carregamento.
+  // Estados dos filtros.
+  const [from, setFrom] = useState('') // Data inicial.
+  const [to, setTo] = useState('') // Data final.
+  const [status, setStatus] = useState('') // Status.
+  const [userId, setUserId] = useState('') // Usuário.
 
+  // Carrega os usuários (para o filtro).
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
 
+  // Carrega as tarefas sem filtros ao abrir.
   useEffect(() => {
     fetchReportedTasks({})
   }, [fetchReportedTasks])
 
+  // Aplica os filtros informados na busca.
+  // O sentinela "all" (seletor "Todos") vira undefined, que o store trata como "sem filtro".
   const applyFilters = () => {
     fetchReportedTasks({
       from: from || undefined,
@@ -36,6 +43,7 @@ export function Reports() {
     })
   }
 
+  // Limpa todos os filtros e recarrega sem filtros.
   const resetFilters = () => {
     setFrom('')
     setTo('')
@@ -56,6 +64,7 @@ export function Reports() {
         <p className="text-muted-foreground">Tarefas concluídas e pendentes com observações</p>
       </div>
 
+      {/* Painel de filtros. */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -102,6 +111,7 @@ export function Reports() {
               </Select>
             </div>
           </div>
+          {/* Botões de aplicar e limpar filtros. */}
           <div className="flex gap-2 mt-4">
             <Button onClick={applyFilters}>Filtrar</Button>
             <Button variant="outline" onClick={resetFilters}>Limpar</Button>
@@ -109,6 +119,7 @@ export function Reports() {
         </CardContent>
       </Card>
 
+      {/* Lista de atividades filtradas. */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Atividades ({tasks.length})</CardTitle>
@@ -131,6 +142,7 @@ export function Reports() {
                     transition={{ delay: idx * 0.03, duration: 0.2 }}
                     className="py-2.5"
                   >
+                    {/* Selos de status, prioridade, título e categoria. */}
                     <div className="flex flex-wrap items-center gap-2">
                       {completed ? (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-green text-white font-medium">Concluída</span>
@@ -150,6 +162,7 @@ export function Reports() {
                         </span>
                       )}
                     </div>
+                    {/* Metadados: data, hora, responsável e data de conclusão. */}
                     <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-muted-foreground">
                       <span>Data: {formatDate(task.date)}</span>
                       {task.time && <span>Hora: {task.time.slice(0, 5)}</span>}
@@ -158,12 +171,14 @@ export function Reports() {
                         <span>Concluída em: {format(new Date(task.completed_at), 'dd/MM/yyyy HH:mm')}</span>
                       )}
                     </div>
+                    {/* Descrição e observações. */}
                     {task.description && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{task.description}</p>}
                     {task.observation && (
                       <p className="text-xs mt-1 whitespace-pre-wrap border-l-2 border-brand-green pl-2 text-muted-foreground">
                         <span className="font-medium text-foreground">Obs:</span> {task.observation}
                       </p>
                     )}
+                    {/* Previsão de conclusão (quando adiada). */}
                     {forecast && task.forecast_date && (
                       <p className="text-xs mt-1 whitespace-pre-wrap border-l-2 border-brand-blue pl-2 text-muted-foreground">
                         <span className="font-medium text-foreground">

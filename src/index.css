@@ -1,11 +1,16 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+/* Estilos globais: integra Tailwind, define o tema (claro/escuro) com
+   variáveis CSS de cor e estiliza as barras de rolagem. */
+@import "tailwindcss"; /* Base do Tailwind v4. */
+@import "tw-animate-css"; /* Animações utilitárias. */
 
+/* Variante `dark` para o Tailwind quando a classe `.dark` está presente. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Define as cores e tokens de tema usados pelas classes Tailwind. */
 @theme {
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif; /* Fonte padrão. */
 
+  /* Cores que referenciam as variáveis HSL de `:root`/`.dark`. */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -26,13 +31,17 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
+  /* Cores da marca (verde e azul). */
   --color-brand-green: #00ce69;
   --color-brand-blue: #002175;
+  --color-brand-blue-soft: #dbe7f7; /* Azul claro para destaque do dia atual. */
 
+  /* Raios de borda baseados no token `--radius`. */
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
+  /* Animação de "piscar" usada em destaque de cards. */
   --animate-blink: blink 1s ease-in-out infinite;
 
   @keyframes blink {
@@ -41,7 +50,9 @@
   }
 }
 
+/* Estilos base do tema. */
 @layer base {
+  /* Tema claro: variáveis HSL de cor e raio. */
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -65,6 +76,7 @@
     --radius: 0.5rem;
   }
 
+  /* Tema escuro: mesmas variáveis com valores mais escuros. */
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -87,22 +99,26 @@
     --ring: 223 100% 50%;
   }
 
+  /* Aplica a cor de borda padrão a todos os elementos. */
   * {
     border-color: hsl(var(--border));
   }
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: smooth; /* Rolagem suave. */
   }
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
+    -webkit-font-smoothing: antialiased; /* Nitidez da fonte. */
   }
+
+  /* Barras de rolagem finas e discretas (Firefox). */
   * {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
   }
+  /* Estilização das barras de rolagem no WebKit (Chrome/Edge). */
   ::-webkit-scrollbar {
     width: 5px;
     height: 5px;
@@ -125,6 +141,7 @@
   ::-webkit-scrollbar-corner {
     background: transparent;
   }
+  /* Ajustes específicos no modo escuro. */
   .dark ::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.3);
   }

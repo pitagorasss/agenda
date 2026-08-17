@@ -1,12 +1,14 @@
+// Página de Usuários: lista os perfis cadastrados na aplicação.
 import { useEffect } from 'react'
-import { useAgendaStore } from '@/stores/agendaStore'
+import { useAgendaStore } from '@/stores/agendaStore' // Ação de buscar usuários.
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users as UsersIcon } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Users as UsersIcon } from 'lucide-react' // Ícone.
+import { motion } from 'framer-motion' // Animação.
 
 export function Users() {
   const { users: profiles, fetchUsers } = useAgendaStore()
 
+  // Carrega a lista de usuários ao montar.
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
@@ -34,6 +36,7 @@ export function Users() {
             <p className="text-sm text-muted-foreground py-4 text-center">Nenhum usuário encontrado.</p>
           ) : (
             <div className="divide-y">
+              {/* Lista os perfis com animação escalonada. */}
               {profiles.map((p, idx) => (
                 <motion.div
                   key={p.id}
@@ -43,9 +46,10 @@ export function Users() {
                   className="flex items-center justify-between py-2.5 gap-3"
                 >
                   <div className="min-w-0">
+                    {/* Nome (ou e-mail se não houver nome) e dados de identificação. */}
                     <p className="text-sm font-medium truncate">{p.name ?? p.email}</p>
                     {p.name && <p className="text-xs text-muted-foreground">{p.email}</p>}
-                    <p className="text-xs text-muted-foreground">ID: {p.id.slice(0, 8)}...</p>
+                    <p className="text-xs text-muted-foreground">ID: {p.id.slice(0, 8)}...</p> {/* Exibe apenas o início do ID (UUID). */}
                   </div>
                 </motion.div>
               ))}

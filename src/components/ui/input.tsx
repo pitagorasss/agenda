@@ -1,6 +1,8 @@
+// Componente de campo de entrada de texto (input), estilizado com Tailwind.
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
+// Input reutilizável com suporte a ref.
 const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   ({ className, type, ...props }, ref) => {
     return (

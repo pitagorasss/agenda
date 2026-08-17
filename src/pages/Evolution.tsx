@@ -1,3 +1,5 @@
+// Página de Evolução: registra e lista observações de melhoria, desempenho e atenção,
+// com filtros por responsável, tipo e nível, e edição/exclusão pelo autor.
 import { useEffect, useState } from 'react'
 import { useAgendaStore } from '@/stores/agendaStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -6,19 +8,22 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { motion } from 'framer-motion'
-import { Plus, Pencil, Trash2, User } from 'lucide-react'
+import { motion } from 'framer-motion' // Animação.
+import { Plus, Pencil, Trash2, User } from 'lucide-react' // Ícones.
 import { cn } from '@/lib/utils'
-import { getUserName, formatDateTime } from '@/lib/taskUtils'
+import { getUserName, formatDateTime } from '@/lib/taskUtils' // Nome do usuário e data formatada.
 
+// Limite de caracteres da descrição.
 const DESCRIPTION_MAX = 500
 
+// Rótulos em português para os tipos de observação.
 const typeLabels: Record<string, string> = {
   melhoria: 'Melhoria',
   desempenho: 'Desempenho',
   atencao: 'Atenção',
 }
 
+// Configuração de rótulo e cores para cada nível de prioridade da observação.
 const levelConfig: Record<string, { label: string; className: string }> = {
   urgente: { label: 'Urgente', className: 'bg-red-500 text-white' },
   emergente: { label: 'Emergente', className: 'bg-amber-500 text-white' },
@@ -29,30 +34,36 @@ export function Evolution() {
   const { evolutions, fetchEvolutions, createEvolution, updateEvolution, deleteEvolution, fetchUsers, users, loadingCount } =
     useAgendaStore()
   const loading = loadingCount > 0
-  const user = useAuthStore((s) => s.user)
+  const user = useAuthStore((s) => s.user) // Usuário logado (autor).
 
+  // Estados do formulário de nova/edição de observação.
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [type, setType] = useState('melhoria')
-  const [level, setLevel] = useState('emergente')
-  const [description, setDescription] = useState('')
-  const [responsibleId, setResponsibleId] = useState('')
+  const [type, setType] = useState('melhoria') // Tipo.
+  const [level, setLevel] = useState('emergente') // Nível.
+  const [description, setDescription] = useState('') // Texto.
+  const [responsibleId, setResponsibleId] = useState('') // Responsável.
 
+  // Estados dos filtros.
   const [filterResponsible, setFilterResponsible] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterLevel, setFilterLevel] = useState('')
 
+  // Carrega os usuários ao montar.
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
 
+  // Carrega as observações ao montar.
   useEffect(() => {
     fetchEvolutions()
   }, [fetchEvolutions])
 
+  // Só o autor pode editar/excluir uma observação.
   const canModify = (item: { id: string; created_by: string }) =>
     item.created_by === user?.id
 
+  // Limpa o formulário.
   const resetForm = () => {
     setType('melhoria')
     setLevel('emergente')
@@ -61,6 +72,7 @@ export function Evolution() {
     setEditingId(null)
   }
 
+  // Preenche o formulário com os dados da observação para edição.
   const openEdit = (item: typeof evolutions[0]) => {
     setEditingId(item.id)
     setType(item.type)
@@ -70,9 +82,10 @@ export function Evolution() {
     setShowForm(true)
   }
 
+  // Salva a observação (cria ou edita).
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!description.trim()) return
+    if (!description.trim()) return // Descrição obrigatória.
     const data = {
       type: type as 'melhoria' | 'desempenho' | 'atencao',
       level: level as 'urgente' | 'emergente' | 'empurravel',
@@ -88,14 +101,16 @@ export function Evolution() {
     }
     if (ok) {
       resetForm()
-      setShowForm(false)
+      setShowForm(false) // Fecha o formulário após salvar.
     }
   }
 
+  // Exclui uma observação.
   const handleDelete = async (id: string) => {
     await deleteEvolution(id)
   }
 
+  // Aplica os filtros na busca.
   const applyFilters = () => {
     fetchEvolutions({
       responsibleId: filterResponsible || undefined,
@@ -104,6 +119,7 @@ export function Evolution() {
     })
   }
 
+  // Limpa os filtros.
   const resetFilters = () => {
     setFilterResponsible('')
     setFilterType('')
@@ -111,7 +127,7 @@ export function Evolution() {
     fetchEvolutions()
   }
 
-  const visibleEvolutions = evolutions
+  const visibleEvolutions = evolutions // Lista exibida (as filtradas vêm do store).
 
   return (
     <motion.div
@@ -120,16 +136,18 @@ export function Evolution() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
+      {/* Cabeçalho com botão de nova observação. */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Espaço de Evolução</h1>
           <p className="text-muted-foreground">Observações de melhorias, desempenho e atenção</p>
         </div>
-        <Button onClick={() => { setShowForm(!showForm); if (showForm) resetForm() }}>
+        <Button onClick={() => { setShowForm(!showForm); if (showForm) resetForm() }}> {/* Abre/fecha o formulário; ao fechar, limpa os campos. */}
           <Plus className="h-4 w-4" /> Nova Observação
         </Button>
       </div>
 
+      {/* Formulário de criar/editar observação. */}
       {showForm && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <Card>
@@ -139,6 +157,7 @@ export function Evolution() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div className="grid gap-3 md:grid-cols-3">
+                  {/* Tipo da observação. */}
                   <div className="space-y-1">
                     <Label>Tipo</Label>
                     <Select value={type} onValueChange={setType}>
@@ -152,6 +171,7 @@ export function Evolution() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {/* Nível de prioridade. */}
                   <div className="space-y-1">
                     <Label>Nível</Label>
                     <Select value={level} onValueChange={setLevel}>
@@ -165,6 +185,7 @@ export function Evolution() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {/* Responsável pela observação. */}
                   <div className="space-y-1">
                     <Label>Responsável</Label>
                     <Select value={responsibleId} onValueChange={setResponsibleId}>
@@ -179,6 +200,7 @@ export function Evolution() {
                     </Select>
                   </div>
                 </div>
+                {/* Texto da observação com contador. */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <Label>Observação</Label>
@@ -189,6 +211,7 @@ export function Evolution() {
                   <Textarea
                     value={description}
                     onChange={(e) => {
+                      // Guard extra: impede ultrapassar o limite (reforça o maxLength).
                       if (e.target.value.length <= DESCRIPTION_MAX) setDescription(e.target.value)
                     }}
                     placeholder="Descreva a observação de evolução..."
@@ -197,6 +220,7 @@ export function Evolution() {
                     maxLength={DESCRIPTION_MAX}
                   />
                 </div>
+                {/* Botões de ação. */}
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => { setShowForm(false); resetForm() }}>
                     Cancelar
@@ -209,6 +233,7 @@ export function Evolution() {
         </motion.div>
       )}
 
+      {/* Painel de filtros. */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Filtros</CardTitle>
@@ -265,6 +290,7 @@ export function Evolution() {
         </CardContent>
       </Card>
 
+      {/* Lista de observações. */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Observações ({visibleEvolutions.length})</CardTitle>
@@ -284,6 +310,7 @@ export function Evolution() {
                   transition={{ delay: idx * 0.02, duration: 0.2 }}
                   className="py-3"
                 >
+                  {/* Selos de nível, tipo e o texto da observação. */}
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium', levelConfig[item.level]?.className)}>
                       {levelConfig[item.level]?.label}
@@ -293,6 +320,7 @@ export function Evolution() {
                     </span>
                     <span className="text-sm font-medium">{item.description}</span>
                   </div>
+                  {/* Metadados: data, responsável e autor. */}
                   <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-muted-foreground">
                     <span>Registrado em: {formatDateTime(item.created_at)}</span>
                     {item.responsible_id && (
@@ -302,6 +330,7 @@ export function Evolution() {
                     )}
                     <span>Autor: {getUserName(item.created_by, users)}</span>
                   </div>
+                  {/* Botões de editar/excluir (apenas do autor). */}
                   {canModify(item) && (
                     <div className="flex gap-1 mt-1.5">
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(item)}>

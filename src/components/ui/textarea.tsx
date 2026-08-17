@@ -1,20 +1,24 @@
+// Componente de área de texto (textarea) com opção de auto-crescimento.
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
+// Textarea que cresce automaticamente quando autoGrow está ativo.
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement> & { autoGrow?: boolean }>(
   ({ className, autoGrow, onChange, ...props }, ref) => {
-    const innerRef = React.useRef<HTMLTextAreaElement | null>(null)
+    const innerRef = React.useRef<HTMLTextAreaElement | null>(null) // Referência interna ao elemento.
 
+    // Combina a ref interna com a ref recebida por prop.
     const handleRef = (node: HTMLTextAreaElement | null) => {
       innerRef.current = node
       if (typeof ref === 'function') ref(node)
       else if (ref) ref.current = node
     }
 
+    // Ajusta a altura do textarea ao conteúdo (sem barra de rolagem).
     const resize = (el: HTMLTextAreaElement | null) => {
       if (!el) return
-      el.style.height = 'auto'
-      el.style.height = `${el.scrollHeight}px`
+      el.style.height = 'auto' // Zera para recalcular.
+      el.style.height = `${el.scrollHeight}px` // Define a nova altura conforme o conteúdo.
     }
 
     return (
@@ -25,8 +29,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttribu
         )}
         ref={handleRef}
         onChange={(e) => {
-          if (autoGrow) resize(e.target)
-          onChange?.(e)
+          if (autoGrow) resize(e.target) // Redimensiona ao digitar (se habilitado).
+          onChange?.(e) // Propaga o evento para o componente pai.
         }}
         {...props}
       />
