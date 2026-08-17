@@ -1,7 +1,7 @@
 // Página de Rotina: grade semanal de horários fixos, onde é possível marcar
 // cumprimento de blocos, arrastar tarefas entre dias/horários e configurar a própria rotina.
 import { useEffect, useMemo, useState } from 'react'
-import { format, startOfWeek, addDays, subWeeks, addWeeks } from 'date-fns' // Cálculos de semana.
+import { format, startOfWeek, addDays } from 'date-fns' // Cálculos de semana.
 import { ptBR } from 'date-fns/locale' // Locale em português.
 import { useAgendaStore } from '@/stores/agendaStore' // Dados e ações.
 import { useAuthStore } from '@/stores/authStore' // Usuário logado.
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CalendarClock, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, Copy, LayoutGrid, Pencil, Plus, Trash2 } from 'lucide-react' // Ícones.
+import { CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Circle, Copy, LayoutGrid, Pencil, Plus, Trash2 } from 'lucide-react' // Ícones.
 import { motion } from 'framer-motion' // Animação.
 import { cn } from '@/lib/utils'
 import { WEEKDAYS } from '@/lib/constants' // Abreviações dos dias.
@@ -42,12 +42,18 @@ export function Rotina() {
     copyRoutineSlots,
   } = useAgendaStore()
   const authUser = useAuthStore((s) => s.user) // Usuário logado.
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 0 })) // Início da semana exibida.
+  const [now, setNow] = useState(() => new Date()) // Data/hora atual (atualizada automaticamente).
   const [activeUserId, setActiveUserId] = useState<string | null>(null) // Usuário cuja rotina é exibida.
   const [configOpen, setConfigOpen] = useState(false) // Indica se o diálogo de configuração está aberto.
   const [configEditId, setConfigEditId] = useState<string | null>(null) // Slot a ser editado ao abrir o diálogo de configuração.
   const [dragTaskId, setDragTaskId] = useState<string | null>(null) // Tarefa sendo arrastada.
   const [mirrorSource, setMirrorSource] = useState<number | null>(null) // Dia (0-6) cuja rotina será espelhada.
+
+  // Atualiza a data/hora a cada minuto para manter a semana vigente automaticamente.
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   // Carrega usuários e dados de rotina ao montar.
   useEffect(() => {
@@ -65,7 +71,8 @@ export function Rotina() {
     }
   }, [activeUserId_, fetchRoutineSlots, fetchRoutineCompletions])
 
-  // Intervalo da semana exibida (de domingo a sábado).
+  // Semana vigente exibida (de domingo a sábado), derivada da data atual.
+  const weekStart = startOfWeek(now, { weekStartsOn: 0 })
   const weekEnd = addDays(weekStart, 6)
   const from = format(weekStart, 'yyyy-MM-dd')
   const to = format(weekEnd, 'yyyy-MM-dd')
@@ -163,18 +170,8 @@ export function Rotina() {
         )}
       </div>
 
-      {/* Controles: navegação de semanas + filtro por usuário. */}
+      {/* Filtro por usuário cuja rotina é exibida. */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="icon" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }))}>
-          Hoje
-        </Button>
-        <Button variant="outline" size="icon" onClick={() => setWeekStart(addWeeks(weekStart, 1))}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <div className="mx-2 h-5 w-px bg-border" />
         {/* Seletor de usuário cuja rotina é exibida. */}
         {users.map((u) => {
           const active = activeUserId_ === u.id
