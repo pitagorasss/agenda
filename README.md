@@ -1,132 +1,128 @@
-# 📋 Agenda
+<div align="center">
 
-Sistema web de gestão de tarefas e rotina para equipes com calendário compartilhado, rotina semanal estruturada, relatórios inteligentes e notificações em tempo real.
+# Agenda
 
----
+Sistema web de gestão de tarefas e rotina para equipes. Calendário compartilhado, rotina semanal fixa, relatórios, estatísticas e notificações em tempo real via Supabase Realtime.
 
-## ⚡ Funcionalidades Principais
+## Funcionalidades
 
-| Módulo | Descrição |
-|--------|-----------|
-| **Dashboard** | Visão unificada do dia: filtros por usuário/status, tarefas atrasadas, taxa de conclusão, agenda de hoje |
-| **Agenda** | Calendário mensal compartilhado com tarefas coloridas. Criar, editar e excluir no contexto do dia |
-| **Rotina** | Grade semanal de blocos horários fixos com confirmação de cumprimento, drag-drop e espelhamento |
-| **Relatórios** | Análise de atividades com filtros por período, status, prioridade, categoria e responsável |
-| **Estatísticas** | KPIs do período (total/concluídas/pendentes, taxa de conclusão) e tendências |
-| **Evolução** | Observações de melhoria/desempenho com níveis de urgência e rastreabilidade |
-| **Notificações** | Lembretes na hora + alertas de conclusão (Web Notifications com som) |
+**Dashboard** — visão do dia com filtros por usuário e status, tarefas atrasadas, taxa de conclusão e lista de tarefas de hoje.
 
----
+**Agenda** — calendário mensal compartilhado com tarefas coloridas por categoria. Criar, editar e excluir tarefas diretamente no dia.
 
-## 🛠 Stack Técnico
+**Rotina** — grade semanal de blocos fixos de horário por usuário, com marcação de cumprimento, drag-and-drop entre dias/horários e espelhamento de um dia para outros.
 
-```
-Frontend:     React 19 · TypeScript · Vite 8 · Tailwind CSS v4 · React Router v7
-Estado:       Zustand
-Backend:      Supabase (Auth · Postgres · Realtime · Storage)
-UI:           Radix UI · Framer Motion · Recharts · Sonner · Lucide
-Qualidade:    Vitest · oxlint · GitHub Actions CI/CD
-```
+**Relatórios** — relatório de atividades com filtros por período, status, prioridade, categoria e responsável.
 
----
+**Estatística** — KPIs do período (total, concluídas, pendentes, taxa de conclusão) e tendência de conclusão.
 
-## 📦 Pré-requisitos
+**Evolução** — espaço de observações de melhoria/desempenho/atenção, com níveis de urgência e responsável.
 
-- **Node.js** ≥ 22.12.0
-- **Projeto Supabase** (ou CLI local com migrations)
+**Usuários** — perfis cadastrados.
 
----
+**Configurações** — tema claro/escuro, notificações do navegador e dados da conta.
 
-## 🚀 Quick Start
+**Notificações** — lembretes no horário das tarefas do dia e alerta quando uma tarefa atribuída a você é concluída por outra pessoa (Web Notifications + sons).
 
-### 1. Instalar dependências
+## Stack
+
+**Frontend:** React 19, TypeScript, Vite 8, Tailwind CSS v4, React Router v7
+**Estado:** Zustand
+**Backend:** Supabase (Auth, Postgres, Realtime, Storage)
+**UI:** Radix UI, Framer Motion, Recharts, Sonner, Lucide
+**Qualidade:** Vitest, oxlint, GitHub Actions CI
+
+## Pré-requisitos
+
+Node.js >= 22.12.0
+Projeto Supabase (ou CLI `supabase` para rodar as migrations localmente)
+
+## Como rodar
+
+**1. Instale as dependências**
+
 ```bash
 npm install
 ```
 
-### 2. Configurar variáveis de ambiente
+**2. Configure as variáveis de ambiente**
+
 ```bash
 cp .env.example .env
 ```
 
-Preencha com valores do seu projeto Supabase:
+| Variável | Descrição |
+|---|---|
+| `VITE_SUPABASE_URL` | URL do projeto (ex.: `https://xxxx.supabase.co`) |
+| `VITE_SUPABASE_ANON_KEY` | Chave anônima (publishable key) do projeto |
 
-```env
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=seu_anon_key_aqui
-```
+**3. Aplique o schema do banco** (migrations em `supabase/migrations/`)
 
-### 3. Aplicar schema do banco
 ```bash
 supabase db push
 ```
 
-### 4. Iniciar desenvolvimento
+**4. Inicie o servidor de desenvolvimento**
+
 ```bash
 npm run dev
 ```
 
----
+## Scripts
 
-## 📜 Scripts Disponíveis
-
-| Comando | Função |
-|---------|--------|
-| `npm run dev` | Servidor Vite em desenvolvimento |
-| `npm run build` | Typecheck + build otimizado |
-| `npm run lint` | Validação de código (oxlint) |
-| `npm test` | Suite de testes (Vitest) |
+| Script | Descrição |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento (Vite) |
+| `npm run build` | Typecheck + build de produção (`tsc -b && vite build`) |
+| `npm run lint` | Lint (oxlint) |
+| `npm test` | Testes (Vitest) |
 | `npm run test:watch` | Testes em modo watch |
-| `npm run preview` | Preview da build final |
+| `npm run preview` | Preview do build |
 
----
-
-## 📁 Arquitetura do Projeto
+## Estrutura do projeto
 
 ```
 src/
 ├── components/
-│   ├── agenda/      Calendário, tarefas, rotina, categorias
-│   ├── layout/      Sidebar e dashboard layout
-│   └── ui/          Kit de componentes (button, card, dialog, etc)
-├── hooks/           useAuth, notificações, custom hooks
-├── lib/             Cliente Supabase, utilitários, cálculos
-├── pages/           Rotas: Login, Dashboard, Agenda, Rotina, etc
-├── stores/          Zustand (auth, agenda)
-└── types/           TypeScript types (espelho do banco)
+│   ├── agenda/      # Componentes de domínio (calendário, tarefas, rotina, categorias)
+│   ├── layout/      # Sidebar e layout do dashboard
+│   └── ui/          # Kit de UI (button, card, dialog, input, select...)
+├── hooks/           # useAuth, notificações de tarefas
+├── lib/             # Cliente Supabase, utilitários, cálculos de performance
+├── pages/           # Login, Dashboard, Agenda, Rotina, Usuários, Relatórios,
+│                     # Estatística, Evolução, Configurações
+├── stores/          # Zustand (auth, agenda)
+└── types/           # Tipos espelhando as tabelas do banco
 
 supabase/
-└── migrations/      Schema, RLS policies, triggers, índices
+└── migrations/      # Schema, RLS, triggers e índices
 ```
 
----
+## Banco de dados
 
-## 🗄 Banco de Dados
+Tabelas principais: `tasks`, `task_categories`, `profiles`, `evolution_observations`, `notifications`, `routine_slots`, `routine_slot_completions`.
 
-**Tabelas principais:**
-- `tasks` · `task_categories` · `profiles` · `evolution_observations`
-- `notifications` · `routine_slots` · `routine_slot_completions`
+RLS habilitado em todas. Trigger `handle_new_user` sincroniza perfis; trigger `notify_task_completed` notifica conclusão de tarefa.
 
-**Segurança & Automação:**
-- RLS habilitado em todas as tabelas
-- Trigger `handle_new_user` — sincroniza perfis
-- Trigger `notify_task_completed` — alerta conclusão de tarefa
+```mermaid
+erDiagram
+    profiles ||--o{ tasks : responsavel
+    profiles ||--o{ routine_slots : possui
+    profiles ||--o{ evolution_observations : avaliado
+    task_categories ||--o{ tasks : categoriza
+    tasks ||--o{ notifications : gera
+    routine_slots ||--o{ routine_slot_completions : registra
+    profiles ||--o{ routine_slot_completions : confirma
+```
 
----
+## Deploy
 
-## 🌐 Deploy
+**Vercel** — o `vercel.json` já configura o rewrite de SPA. Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` como variáveis de ambiente no dashboard.
 
-### Vercel
-1. `vercel.json` já configura SPA rewrite
-2. Configure variáveis no dashboard:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
+**CI** — `.github/workflows/ci.yml` roda lint, testes e build em push/PR para `main`.
 
-### CI/CD
-- `.github/workflows/ci.yml` — lint, testes e build em push/PR para `main`
-
----
-
-## 📄 Licença
+## Licença
 
 Uso interno.
+
+</div>
