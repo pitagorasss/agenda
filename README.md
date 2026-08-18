@@ -79,6 +79,8 @@ npm run dev
 | `npm run test:watch` | Testes em modo watch |
 | `npm run preview` | Preview do build |
 
+<div align="left">
+
 ## Estrutura do projeto
 
 ```
@@ -97,6 +99,8 @@ src/
 supabase/
 └── migrations/      # Schema, RLS, triggers e índices
 ```
+
+</div>
 
 ## Banco de dados
 
