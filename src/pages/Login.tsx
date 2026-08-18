@@ -40,7 +40,7 @@ export function Login() {
           />
         </div>
         <Card>
-          <CardContent>
+          <CardContent className="p-8 pt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Campo de e-mail. */}
               <div className="space-y-2">

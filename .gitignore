@@ -34,3 +34,6 @@ supabase/.temp/
 
 # opencode telemetry
 .opencode/
+
+# modifications
+.modificacoes/
